@@ -31,12 +31,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-       // Try to connect to database with better error handling
+         // Try to connect to database with better error handling
     if (method === 'GET' && path === '/test') {
       try {
-        // Try with regular postgres client first
-        const { Pool } = await import('pg');
-        const pool = new Pool({ 
+        // Try with regular postgres client first (correct import)
+        const pg = await import('pg');
+        const pool = new pg.Pool({ 
           connectionString: process.env.DATABASE_URL,
           ssl: { rejectUnauthorized: false }
         });
@@ -49,11 +49,13 @@ export default async function handler(req: any, res: any) {
         });
       } catch (pgError) {
         try {
-          // Fallback to Neon client
-          const { Pool } = await import('@neondatabase/serverless');
+          // Fallback to Neon client with WebSocket config
+          const { Pool, neonConfig } = await import('@neondatabase/serverless');
+          const ws = await import('ws');
+          neonConfig.webSocketConstructor = ws.default;
+          
           const pool = new Pool({ 
-            connectionString: process.env.DATABASE_URL,
-            ssl: { rejectUnauthorized: false }
+            connectionString: process.env.DATABASE_URL
           });
           const result = await pool.query('SELECT NOW() as current_time');
           return res.json({ 
