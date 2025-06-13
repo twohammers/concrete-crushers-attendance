@@ -154,28 +154,29 @@ export default async function handler(req: any, res: any) {
     // Data population endpoint
     if (method === 'POST' && path === '/populate') {
       const teamRoster = [
-        { firstName: "Alyssa", lastName: "Sherlock", position: "Player", jerseyNumber: 1, gamesPlayed: 0, isActive: true },
-        { firstName: "Derrick", lastName: "Chew", position: "Player", jerseyNumber: 2, gamesPlayed: 0, isActive: true },
-        { firstName: "Emily", lastName: "Rich", position: "Player", jerseyNumber: 3, gamesPlayed: 0, isActive: true },
-        { firstName: "Francisco", lastName: "Chavez", position: "Player", jerseyNumber: 4, gamesPlayed: 0, isActive: true },
-        { firstName: "Hayden", lastName: "Hogun", position: "Player", jerseyNumber: 5, gamesPlayed: 0, isActive: true },
-        { firstName: "Honey", lastName: "Torres", position: "Player", jerseyNumber: 6, gamesPlayed: 0, isActive: true },
-        { firstName: "Jessica", lastName: "Henriquez", position: "Player", jerseyNumber: 7, gamesPlayed: 0, isActive: true },
-        { firstName: "Juan", lastName: "Ramos", position: "Player", jerseyNumber: 8, gamesPlayed: 0, isActive: true },
-        { firstName: "Kathy", lastName: "Lininger", position: "Player", jerseyNumber: 9, gamesPlayed: 0, isActive: true },
-        { firstName: "Michael", lastName: "Sanchez", position: "Player", jerseyNumber: 10, gamesPlayed: 0, isActive: true },
-        { firstName: "Omar", lastName: "Banuelos", position: "Player", jerseyNumber: 11, gamesPlayed: 0, isActive: true },
-        { firstName: "Robert", lastName: "Hodes", position: "Player", jerseyNumber: 12, gamesPlayed: 0, isActive: true },
-        { firstName: "Shannon", lastName: "Bible", position: "Player", jerseyNumber: 13, gamesPlayed: 0, isActive: true },
-        { firstName: "Skye", lastName: "Lininger", position: "Player", jerseyNumber: 14, gamesPlayed: 0, isActive: true },
-        { firstName: "Steven", lastName: "Maciel", position: "Player", jerseyNumber: 15, gamesPlayed: 0, isActive: true },
-        { firstName: "Tereasa", lastName: "Ramos", position: "Player", jerseyNumber: 16, gamesPlayed: 0, isActive: true },
-        { firstName: "Dahlia", lastName: "Moreno", position: "Alternate", jerseyNumber: 17, gamesPlayed: 0, isActive: false }
-      ];
+          { firstName: "Omar", lastName: "Banuelos", position: "Player", jerseyNumber: 11, gamesPlayed: 0, isActive: true },
+          { firstName: "Shannon", lastName: "Bible", position: "Player", jerseyNumber: 13, gamesPlayed: 0, isActive: true },
+          { firstName: "Francisco", lastName: "Chavez", position: "Player", jerseyNumber: 4, gamesPlayed: 0, isActive: true },
+          { firstName: "Derrick", lastName: "Chew", position: "Player", jerseyNumber: 2, gamesPlayed: 0, isActive: true },
+          { firstName: "Jessica", lastName: "Henriquez", position: "Player", jerseyNumber: 7, gamesPlayed: 0, isActive: true },
+          { firstName: "Robert", lastName: "Hodes", position: "Player", jerseyNumber: 12, gamesPlayed: 0, isActive: true },
+          { firstName: "Hayden", lastName: "Hogun", position: "Player", jerseyNumber: 5, gamesPlayed: 0, isActive: true },
+          { firstName: "Kathy", lastName: "Lininger", position: "Player", jerseyNumber: 9, gamesPlayed: 0, isActive: true },
+          { firstName: "Skye", lastName: "Lininger", position: "Player", jerseyNumber: 14, gamesPlayed: 0, isActive: true },
+          { firstName: "Steven", lastName: "Maciel", position: "Player", jerseyNumber: 15, gamesPlayed: 0, isActive: true },
+          { firstName: "Dahlia", lastName: "Moreno", position: "Alternate", jerseyNumber: 17, gamesPlayed: 0, isActive: false },
+          { firstName: "Juan", lastName: "Ramos", position: "Player", jerseyNumber: 8, gamesPlayed: 0, isActive: true },
+          { firstName: "Tereasa", lastName: "Ramos", position: "Player", jerseyNumber: 16, gamesPlayed: 0, isActive: true },
+          { firstName: "Emily", lastName: "Rich", position: "Player", jerseyNumber: 3, gamesPlayed: 0, isActive: true },
+          { firstName: "Michael", lastName: "Sanchez", position: "Player", jerseyNumber: 10, gamesPlayed: 0, isActive: true },
+          { firstName: "Alyssa", lastName: "Sherlock", position: "Player", jerseyNumber: 1, gamesPlayed: 0, isActive: true },
+          { firstName: "Honey", lastName: "Torres", position: "Player", jerseyNumber: 6, gamesPlayed: 0, isActive: true }
+        ];
 
-      const games = [
+     const games = [
         { opponent: "Chico Islanders", homeAway: "Home", field: "Hooker Oak Park", date: "2025-06-20", time: "19:10", isActive: true },
         { opponent: "Hignell Hooligans", homeAway: "Home", field: "Hooker Oak Park", date: "2025-06-27", time: "18:00", isActive: false },
+        { opponent: "July 4th Holiday", homeAway: "Bye", field: "No Game", date: "2025-07-04", time: "00:00", isActive: false },
         { opponent: "Butte Roofing Company", homeAway: "Away", field: "Hooker Oak Park", date: "2025-07-11", time: "18:00", isActive: false },
         { opponent: "Bat Habits", homeAway: "Home", field: "Hooker Oak Park", date: "2025-07-18", time: "21:30", isActive: false },
         { opponent: "The Not So Glum Lot", homeAway: "Away", field: "Hooker Oak Park", date: "2025-07-25", time: "20:20", isActive: false },
