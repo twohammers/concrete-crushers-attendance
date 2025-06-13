@@ -62,7 +62,7 @@ export default async function handler(req: any, res: any) {
         attending,
         notAttending,
         total: attendees.length,
-        gameStatus: activeGame?.status || 'upcoming'
+        gameStatus: activeGame?.isActive ? 'active' : 'upcoming'
       });
     }
 
@@ -110,7 +110,8 @@ export default async function handler(req: any, res: any) {
     if (method === 'PUT' && path.startsWith('/roster/')) {
       const id = parseInt(path.split('/')[2]);
       const data = updateRosterSchema.parse(req.body);
-      const member = await storage.updateTeamMember({ id, ...data });
+      const updateData = { ...data, id };
+      const member = await storage.updateTeamMember(updateData);
       return res.json(member);
     }
 
