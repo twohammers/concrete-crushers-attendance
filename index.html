@@ -45,43 +45,40 @@
         </nav>
 
         <!-- Home Page -->
-        <div id="home-page" class="page max-w-6xl mx-auto p-4 space-y-6">
-            <!-- Featured Game Info Card -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 shadow-lg">
-                <div id="game-info" class="loading h-20 bg-blue-500 rounded"></div>
-            </div>
+        <div id="home-page" class="page max-w-6xl mx-auto">
+            <!-- Fixed Header Section -->
+            <div class="sticky top-0 bg-white z-10 p-4 space-y-4 border-b shadow-sm">
+                <!-- Featured Game Info Card -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 shadow-lg">
+                    <div id="game-info" class="loading h-20 bg-blue-500 rounded"></div>
+                </div>
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="card text-center">
-                    <div class="text-3xl font-bold text-green-600" id="attending-count">-</div>
-                    <div class="text-sm text-gray-600">Attending</div>
-                </div>
-                <div class="card text-center">
-                    <div class="text-3xl font-bold text-red-600" id="not-attending-count">-</div>
-                    <div class="text-sm text-gray-600">Not Attending</div>
-                </div>
-                <div class="card text-center">
-                    <div class="text-lg font-semibold" id="game-status">-</div>
-                    <div class="text-sm text-gray-600">Game Status</div>
-                </div>
-            </div>
-
-            <!-- Roster Check-in -->
-            <div class="card">
-                <h2 class="text-xl font-bold mb-4">Quick Check-in</h2>
-                <div id="roster-checkin" class="space-y-2">
-                    <div class="loading h-6"></div>
-                    <div class="loading h-6"></div>
-                    <div class="loading h-6"></div>
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="card text-center">
+                        <div class="text-3xl font-bold text-green-600" id="attending-count">-</div>
+                        <div class="text-sm text-gray-600">Attending</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-3xl font-bold text-red-600" id="not-attending-count">-</div>
+                        <div class="text-sm text-gray-600">Not Attending</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-lg font-semibold" id="game-status">-</div>
+                        <div class="text-sm text-gray-600">Game Status</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Current Responses -->
-            <div class="card">
-                <h2 class="text-xl font-bold mb-4">Current Responses</h2>
-                <div id="current-responses" class="space-y-2">
-                    <div class="loading h-6"></div>
+            <!-- Scrollable Roster Section -->
+            <div class="p-4">
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4">Quick Check-in</h2>
+                    <div id="roster-checkin" class="space-y-2 max-h-96 overflow-y-auto">
+                        <div class="loading h-6"></div>
+                        <div class="loading h-6"></div>
+                        <div class="loading h-6"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -292,7 +289,18 @@
         // Check-in functionality
         window.checkIn = async function(firstName, lastName, status) {
             try {
-                // Check if attendee already exists
+                // Optimistic update for instant UI response
+                const existingAttendee = attendees.find(a => a.firstName === firstName && a.lastName === lastName);
+                if (existingAttendee) {
+                    existingAttendee.status = status;
+                } else {
+                    attendees.push({ firstName, lastName, status });
+                }
+                
+                // Update UI immediately
+                updateDisplay();
+                
+                // Then sync with Firebase
                 const existingSnapshot = await db.collection('attendees')
                     .where('firstName', '==', firstName)
                     .where('lastName', '==', lastName)
@@ -312,12 +320,12 @@
                         updatedAt: new Date()
                     });
                 }
-
-                await loadAttendees();
-                updateDisplay();
                 
             } catch (error) {
                 console.error('Error checking in:', error);
+                // Reload data on error to ensure consistency
+                await loadAttendees();
+                updateDisplay();
                 alert('Error updating attendance. Please try again.');
             }
         };
@@ -429,7 +437,8 @@
             // Stats
             const attending = attendees.filter(a => a.status === 'attending').length;
             const notAttending = attendees.filter(a => a.status === 'not_attending').length;
-            const gameStatus = attending >= 10 ? 'Game confirmed' : 'Need more players';
+            const needed = Math.max(0, 10 - attending);
+            const gameStatus = attending >= 10 ? 'Game confirmed!' : `${attending}/10 - ${needed} more needed!`;
 
             document.getElementById('attending-count').textContent = attending;
             document.getElementById('not-attending-count').textContent = notAttending;
@@ -456,17 +465,6 @@
                     </div>
                 </div>`;
             }).join('');
-
-            // Current responses
-            document.getElementById('current-responses').innerHTML = attendees.length ? 
-                attendees.map(attendee => `
-                    <div class="flex items-center justify-between p-3 border rounded-lg">
-                        <span>${attendee.firstName} ${attendee.lastName}</span>
-                        <span class="badge ${attendee.status === 'attending' ? 'badge-success' : 'badge-danger'}">
-                            ${attendee.status === 'attending' ? 'Attending' : 'Not Attending'}
-                        </span>
-                    </div>
-                `).join('') : '<p class="text-gray-600">No responses yet</p>';
         }
 
         function renderRoster() {
