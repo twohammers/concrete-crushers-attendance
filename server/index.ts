@@ -12,17 +12,19 @@ export default async function handler(req: any, res: any) {
     const { method, url } = req;
     const path = url.replace('/api', '');
 
-    // Environment check endpoint
+       // Environment check endpoint
     if (method === 'GET' && path === '/debug') {
       return res.json({
         nodeVersion: process.version,
         platform: process.platform,
         hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
         envKeys: Object.keys(process.env).filter(k => k.includes('FIREBASE')),
-        timestamp: new Date().toISOString()
+        allEnvKeys: Object.keys(process.env).length,
+        timestamp: new Date().toISOString(),
+        projectId: process.env.FIREBASE_PROJECT_ID || 'not found',
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ? 'present' : 'missing'
       });
     }
-
     // Check if Firebase environment variables exist  
     if (!process.env.FIREBASE_PROJECT_ID) {
       return res.status(500).json({ 
