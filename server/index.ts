@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Check if Firebase environment variables exist
+    // Check if Firebase environment variables exist  
     if (!process.env.FIREBASE_PROJECT_ID) {
       return res.status(500).json({ 
         error: 'Firebase environment variables not found',
