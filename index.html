@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Concrete Crushers - Game Attendance</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors; }
@@ -172,8 +174,15 @@
     </div>
 
     <script>
-        // Use the existing Firebase API endpoint for backend communication
-        const API_BASE = 'https://concrete-crushers-attendance.vercel.app/api';
+        // Direct Firebase connection for GitHub Pages
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-zHF8cHXE_uKVVJROKmxjfTxTr5vQeQ4",
+            authDomain: "concrete-crushers-e92d5.firebaseapp.com",
+            projectId: "concrete-crushers-e92d5",
+            storageBucket: "concrete-crushers-e92d5.firebasestorage.app",
+            messagingSenderId: "421857055527",
+            appId: "1:421857055527:web:5e0e5c5e5e5e5e5e5e5e5e"
+        };
 
         // Global state
         let currentPage = 'home';
@@ -182,6 +191,7 @@
         let attendees = [];
         let games = [];
         let activeGame = null;
+        let db = null;
 
         // Page navigation
         window.showPage = function(page) {
@@ -217,27 +227,20 @@
             document.getElementById('admin-password').value = '';
         };
 
-        // API functions
-        async function apiRequest(method, endpoint, data = null) {
-            const options = {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            };
-            
-            if (data) {
-                options.body = JSON.stringify(data);
+        // Initialize Firebase
+        function initFirebase() {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
             }
-            
-            const response = await fetch(API_BASE + endpoint, options);
-            return response.json();
+            db = firebase.firestore();
         }
 
         // Data loading functions
         async function loadRoster() {
             try {
-                roster = await apiRequest('GET', '/roster');
+                const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
+                roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
                 return roster;
             } catch (error) {
                 console.error('Error loading roster:', error);
@@ -247,7 +250,8 @@
 
         async function loadAttendees() {
             try {
-                attendees = await apiRequest('GET', '/attendees');
+                const snapshot = await db.collection('attendees').get();
+                attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 return attendees;
             } catch (error) {
                 console.error('Error loading attendees:', error);
@@ -257,8 +261,14 @@
 
         async function loadGames() {
             try {
-                games = await apiRequest('GET', '/games');
-                activeGame = await apiRequest('GET', '/game');
+                const gamesSnapshot = await db.collection('games').orderBy('date').get();
+                games = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                const activeSnapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
+                if (!activeSnapshot.empty) {
+                    activeGame = { id: activeSnapshot.docs[0].id, ...activeSnapshot.docs[0].data() };
+                }
+                
                 return games;
             } catch (error) {
                 console.error('Error loading games:', error);
@@ -269,11 +279,26 @@
         // Check-in functionality
         window.checkIn = async function(firstName, lastName, status) {
             try {
-                await apiRequest('POST', '/attendees', {
-                    firstName,
-                    lastName,
-                    status
-                });
+                // Check if attendee already exists
+                const existingSnapshot = await db.collection('attendees')
+                    .where('firstName', '==', firstName)
+                    .where('lastName', '==', lastName)
+                    .get();
+
+                if (!existingSnapshot.empty) {
+                    // Update existing attendee
+                    const doc = existingSnapshot.docs[0];
+                    await doc.ref.update({ status, updatedAt: new Date() });
+                } else {
+                    // Create new attendee
+                    await db.collection('attendees').add({
+                        firstName,
+                        lastName,
+                        status,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
 
                 await loadAttendees();
                 updateDisplay();
@@ -287,7 +312,7 @@
         // Admin functions
         window.clearAttendee = async function(attendeeId) {
             try {
-                await apiRequest('DELETE', `/attendees/${attendeeId}`);
+                await db.collection('attendees').doc(attendeeId).delete();
                 await loadAttendees();
                 updateDisplay();
             } catch (error) {
@@ -299,7 +324,13 @@
         window.clearAllResponses = async function() {
             if (confirm('Are you sure you want to clear all responses?')) {
                 try {
-                    await apiRequest('DELETE', '/attendees');
+                    const snapshot = await db.collection('attendees').get();
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    
                     await loadAttendees();
                     updateDisplay();
                 } catch (error) {
@@ -311,7 +342,18 @@
 
         window.setActiveGame = async function(gameId) {
             try {
-                await apiRequest('POST', '/game/set-active', { gameId });
+                // First, set all games to inactive
+                const allGamesSnapshot = await db.collection('games').get();
+                const batch = db.batch();
+                
+                allGamesSnapshot.docs.forEach(doc => {
+                    batch.update(doc.ref, { isActive: false });
+                });
+                
+                // Set the selected game to active
+                batch.update(db.collection('games').doc(gameId), { isActive: true });
+                
+                await batch.commit();
                 await loadGames();
                 updateDisplay();
             } catch (error) {
@@ -487,6 +529,7 @@
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', async () => {
+            initFirebase();
             await loadPageData();
             showPage('home');
         });
