@@ -36,7 +36,7 @@ export default async function handler(req: any, res: any) {
       try {
         // Try with regular postgres client first (correct import)
         const pg = await import('pg');
-        const pool = new pg.Pool({ 
+        const { Pool } = pg.default || pg;
           connectionString: process.env.DATABASE_URL,
           ssl: { rejectUnauthorized: false }
         });
