@@ -31,9 +31,35 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Try to connect to database
+    // Try to connect to database with better error handling
+    if (method === 'GET' && path === '/test') {
+      try {
+        const { Pool } = await import('@neondatabase/serverless');
+        const pool = new Pool({ 
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false }
+        });
+        const result = await pool.query('SELECT NOW() as current_time');
+        return res.json({ 
+          status: 'success',
+          database: 'connected',
+          time: result.rows[0]
+        });
+      } catch (dbError) {
+        return res.status(500).json({ 
+          error: 'Database connection failed',
+          message: dbError instanceof Error ? dbError.message : String(dbError),
+          type: dbError instanceof Error ? dbError.constructor.name : 'Unknown',
+          connectionString: process.env.DATABASE_URL ? 'present' : 'missing'
+        });
+      }
+    }
+
     const { Pool } = await import('@neondatabase/serverless');
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
 
     // Test basic connectivity
     if (method === 'GET' && path === '/test') {
