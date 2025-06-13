@@ -46,19 +46,19 @@
 
         <!-- Home Page -->
         <div id="home-page" class="page max-w-6xl mx-auto p-4 space-y-6">
-            <!-- Game Info Card -->
-            <div class="card">
-                <div id="game-info" class="loading h-20"></div>
+            <!-- Featured Game Info Card -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 shadow-lg">
+                <div id="game-info" class="loading h-20 bg-blue-500 rounded"></div>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="card text-center">
-                    <div class="text-2xl font-bold text-green-600" id="attending-count">-</div>
+                    <div class="text-3xl font-bold text-green-600" id="attending-count">-</div>
                     <div class="text-sm text-gray-600">Attending</div>
                 </div>
                 <div class="card text-center">
-                    <div class="text-2xl font-bold text-red-600" id="not-attending-count">-</div>
+                    <div class="text-3xl font-bold text-red-600" id="not-attending-count">-</div>
                     <div class="text-sm text-gray-600">Not Attending</div>
                 </div>
                 <div class="card text-center">
@@ -389,19 +389,41 @@
         }
 
         function renderHome() {
-            // Game info
+            // Game info - prominent display
             if (activeGame) {
                 document.getElementById('game-info').innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-xl font-bold">Next Game: vs ${activeGame.opponent}</h2>
-                            <p class="text-gray-600">${formatDate(activeGame.date)} • ${activeGame.time} • ${activeGame.location}</p>
+                    <div class="text-center">
+                        <h1 class="text-3xl font-bold text-white mb-2">NEXT GAME</h1>
+                        <div class="text-2xl font-semibold text-blue-100 mb-3">vs ${activeGame.opponent}</div>
+                        <div class="flex justify-center items-center gap-6 text-blue-100">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium">${formatDate(activeGame.date)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium">${activeGame.time}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-medium">${activeGame.location}</span>
+                            </div>
                         </div>
-                        <span class="badge badge-success">${activeGame.homeAway}</span>
+                        <div class="mt-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${activeGame.homeAway === 'Home' ? 'bg-green-500' : 'bg-orange-500'} text-white">
+                                ${activeGame.homeAway} Game
+                            </span>
+                        </div>
                     </div>
                 `;
             } else {
-                document.getElementById('game-info').innerHTML = '<p class="text-gray-600">No active game</p>';
+                document.getElementById('game-info').innerHTML = '<p class="text-center text-blue-100">No active game scheduled</p>';
             }
 
             // Stats
@@ -414,17 +436,26 @@
             document.getElementById('game-status').textContent = gameStatus;
 
             // Roster check-in
-            document.getElementById('roster-checkin').innerHTML = roster.map(member => `
-                <div class="flex items-center justify-between p-3 border rounded-lg">
-                    <span class="font-medium">${member.firstName} ${member.lastName}</span>
+            document.getElementById('roster-checkin').innerHTML = roster.map(member => {
+                const attendee = attendees.find(a => a.firstName === member.firstName && a.lastName === member.lastName);
+                const status = attendee?.status;
+                
+                return `
+                <div class="flex items-center justify-between p-3 border rounded-lg ${status === 'attending' ? 'bg-green-50 border-green-200' : status === 'not_attending' ? 'bg-red-50 border-red-200' : ''}">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium">${member.firstName} ${member.lastName}</span>
+                        ${status ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status === 'attending' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${status === 'attending' ? '✓ Attending' : '✗ Not Attending'}
+                        </span>` : '<span class="text-gray-500 text-sm">No response</span>'}
+                    </div>
                     <div class="flex gap-2">
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'attending')" 
-                                class="btn-success">In</button>
+                                class="btn-success ${status === 'attending' ? 'opacity-50' : ''}">In</button>
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'not_attending')" 
-                                class="btn-danger">Out</button>
+                                class="btn-danger ${status === 'not_attending' ? 'opacity-50' : ''}">Out</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             // Current responses
             document.getElementById('current-responses').innerHTML = attendees.length ? 
