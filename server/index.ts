@@ -31,27 +31,44 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Try to connect to database with better error handling
+       // Try to connect to database with better error handling
     if (method === 'GET' && path === '/test') {
       try {
-        const { Pool } = await import('@neondatabase/serverless');
+        // Try with regular postgres client first
+        const { Pool } = await import('pg');
         const pool = new Pool({ 
           connectionString: process.env.DATABASE_URL,
           ssl: { rejectUnauthorized: false }
         });
         const result = await pool.query('SELECT NOW() as current_time');
+        await pool.end();
         return res.json({ 
           status: 'success',
-          database: 'connected',
+          database: 'connected (pg)',
           time: result.rows[0]
         });
-      } catch (dbError) {
-        return res.status(500).json({ 
-          error: 'Database connection failed',
-          message: dbError instanceof Error ? dbError.message : String(dbError),
-          type: dbError instanceof Error ? dbError.constructor.name : 'Unknown',
-          connectionString: process.env.DATABASE_URL ? 'present' : 'missing'
-        });
+      } catch (pgError) {
+        try {
+          // Fallback to Neon client
+          const { Pool } = await import('@neondatabase/serverless');
+          const pool = new Pool({ 
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }
+          });
+          const result = await pool.query('SELECT NOW() as current_time');
+          return res.json({ 
+            status: 'success',
+            database: 'connected (neon)',
+            time: result.rows[0]
+          });
+        } catch (neonError) {
+          return res.status(500).json({ 
+            error: 'Database connection failed',
+            pgError: pgError instanceof Error ? pgError.message : String(pgError),
+            neonError: neonError instanceof Error ? neonError.message : String(neonError),
+            connectionString: process.env.DATABASE_URL ? 'present' : 'missing'
+          });
+        }
       }
     }
 
