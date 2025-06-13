@@ -151,16 +151,6 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    return res.status(404).json({ error: 'Route not found', path, method });
-
-  } catch (error) {
-    return res.status(500).json({ 
-      error: 'Server error', 
-      message: error instanceof Error ? error.message : String(error),
-      type: error instanceof Error ? error.constructor.name : 'Unknown'
-    });
-  }
-}
     // Data population endpoint
     if (method === 'POST' && path === '/populate') {
       const teamRoster = [
@@ -225,3 +215,14 @@ export default async function handler(req: any, res: any) {
         });
       }
     }
+
+    return res.status(404).json({ error: 'Route not found', path, method });
+
+  } catch (error) {
+    return res.status(500).json({ 
+      error: 'Server error', 
+      message: error instanceof Error ? error.message : String(error),
+      type: error instanceof Error ? error.constructor.name : 'Unknown'
+    });
+  }
+}
