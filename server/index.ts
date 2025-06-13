@@ -51,27 +51,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Initialize app
+// Error handling middleware
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ message });
+  if (process.env.NODE_ENV !== "production") {
+    throw err;
+  }
+});
+
+// Initialize for different environments
 if (process.env.VERCEL) {
-  // For Vercel, initialize synchronously without starting a server
-  registerRoutes(app).then(() => {
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
-    });
-  });
+  // For Vercel, routes must be registered synchronously
+  // We'll handle this in the route handler
 } else {
   // For local development
   (async () => {
     const server = await registerRoutes(app);
-
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
-      throw err;
-    });
 
     if (app.get("env") === "development") {
       await setupVite(app, server);
@@ -90,5 +87,13 @@ if (process.env.VERCEL) {
   })();
 }
 
-// Export at top level for Vercel
-export default app;
+// Export handler for Vercel
+export default async function handler(req: Request, res: Response) {
+  // Initialize routes on first request if in Vercel
+  if (!app.locals.routesInitialized) {
+    await registerRoutes(app);
+    app.locals.routesInitialized = true;
+  }
+  
+  return app(req, res);
+}
