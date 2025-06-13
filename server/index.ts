@@ -17,147 +17,125 @@ export default async function handler(req: any, res: any) {
       return res.json({
         nodeVersion: process.version,
         platform: process.platform,
-        hasDB: !!process.env.DATABASE_URL,
-        envKeys: Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('PG')),
+        hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
+        envKeys: Object.keys(process.env).filter(k => k.includes('FIREBASE')),
         timestamp: new Date().toISOString()
       });
     }
 
-    // Check if DATABASE_URL exists
-    if (!process.env.DATABASE_URL) {
+    // Check if Firebase environment variables exist
+    if (!process.env.FIREBASE_PROJECT_ID) {
       return res.status(500).json({ 
-        error: 'DATABASE_URL environment variable not found',
-        availableEnvs: Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('PG'))
+        error: 'Firebase environment variables not found',
+        required: ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL']
       });
     }
 
-         // Database connection test with detailed diagnostics
+    // Firebase connection test
     if (method === 'GET' && path === '/test') {
-      const dbUrl = process.env.DATABASE_URL;
-      const connectionInfo = {
-        hasUrl: !!dbUrl,
-        urlPrefix: dbUrl ? dbUrl.substring(0, 20) + '...' : 'none',
-        isSupabase: dbUrl ? dbUrl.includes('supabase') : false,
-        isNeon: dbUrl ? dbUrl.includes('neon') : false
-      };
-
-      // Try simplified connection with postgres library
       try {
-        const postgres = await import('postgres');
-        const sql = postgres.default(dbUrl, {
-          ssl: 'require'
-        });
+        const { db } = await import('./firebase.js');
         
-        const result = await sql`SELECT NOW() as current_time`;
-        await sql.end();
+        // Test Firebase connection by creating a simple document
+        const testDoc = db.collection('test').doc('connection');
+        await testDoc.set({ timestamp: new Date(), test: true });
+        
+        // Read it back
+        const doc = await testDoc.get();
+        const data = doc.data();
+        
+        // Clean up
+        await testDoc.delete();
         
         return res.json({ 
           status: 'success',
-          database: 'connected (postgres)',
-          time: result[0],
-          connectionInfo
+          database: 'connected (firebase)',
+          time: data?.timestamp,
+          projectId: process.env.FIREBASE_PROJECT_ID
         });
-      } catch (postgresError) {
+      } catch (firebaseError) {
         return res.status(500).json({ 
-          error: 'Database connection failed',
-          postgresError: postgresError instanceof Error ? postgresError.message : String(postgresError),
-          connectionInfo,
-          suggestion: 'Check if DATABASE_URL is correctly formatted for Supabase'
+          error: 'Firebase connection failed',
+          firebaseError: firebaseError instanceof Error ? firebaseError.message : String(firebaseError),
+          suggestion: 'Check Firebase environment variables'
         });
       }
     }
 
-    const { Pool } = await import('@neondatabase/serverless');
-    const pool = new Pool({ 
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-
-    // Test basic connectivity
-    if (method === 'GET' && path === '/test') {
-      const result = await pool.query('SELECT NOW() as current_time');
-      return res.json({ 
-        status: 'success',
-        database: 'connected',
-        time: result.rows[0]
-      });
-    }
+    const { db } = await import('./firebase.js');
 
     // Core endpoints for the app
     if (method === 'GET' && path === '/roster') {
-      const result = await pool.query(`
-        SELECT id, "firstName", "lastName", position, "jerseyNumber", "gamesPlayed", "isActive"
-        FROM team_roster 
-        WHERE "isActive" = true 
-        ORDER BY "firstName", "lastName"
-      `);
-      return res.json(result.rows);
+      const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
+      const roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json(roster);
     }
 
     if (method === 'GET' && path === '/game') {
-      const result = await pool.query(`
-        SELECT id, opponent, "homeAway", field, date, time, "isActive"
-        FROM games 
-        WHERE "isActive" = true 
-        LIMIT 1
-      `);
-      return res.json(result.rows[0] || null);
+      const snapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
+      const game = snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } : null;
+      return res.json(game);
     }
 
     if (method === 'GET' && path === '/games') {
-      const result = await pool.query(`
-        SELECT id, opponent, "homeAway", field, date, time, "isActive"
-        FROM games 
-        ORDER BY date
-      `);
-      return res.json(result.rows);
+      const snapshot = await db.collection('games').orderBy('date').get();
+      const games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json(games);
     }
 
     if (method === 'GET' && path === '/attendees') {
-      const result = await pool.query(`
-        SELECT id, "firstName", "lastName", status, "checkedInAt"
-        FROM attendees 
-        ORDER BY "checkedInAt" DESC
-      `);
-      return res.json(result.rows);
+      const snapshot = await db.collection('attendees').orderBy('checkedInAt', 'desc').get();
+      const attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json(attendees);
     }
 
     if (method === 'GET' && path === '/stats') {
-      const attendeesResult = await pool.query('SELECT status FROM attendees');
-      const gameResult = await pool.query('SELECT "isActive" FROM games WHERE "isActive" = true LIMIT 1');
+      const snapshot = await db.collection('attendees').get();
+      const attendees = snapshot.docs.map(doc => doc.data());
       
-      const attendees = attendeesResult.rows;
       const attending = attendees.filter(a => a.status === 'attending').length;
       const notAttending = attendees.filter(a => a.status === 'not_attending').length;
+      
+      const gameSnapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
       
       return res.json({
         attending,
         notAttending,
         total: attendees.length,
-        gameStatus: gameResult.rows.length > 0 ? 'active' : 'upcoming'
+        gameStatus: gameSnapshot.docs.length > 0 ? 'active' : 'upcoming'
       });
     }
 
     if (method === 'POST' && path === '/attendees') {
       const { firstName, lastName, status } = req.body;
       
-      const existingResult = await pool.query(
-        'SELECT id FROM attendees WHERE "firstName" = $1 AND "lastName" = $2',
-        [firstName, lastName]
-      );
+      // Check if attendee already exists
+      const existingSnapshot = await db.collection('attendees')
+        .where('firstName', '==', firstName)
+        .where('lastName', '==', lastName)
+        .get();
 
-      if (existingResult.rows.length > 0) {
-        const updateResult = await pool.query(
-          'UPDATE attendees SET status = $1, "checkedInAt" = NOW() WHERE id = $2 RETURNING *',
-          [status, existingResult.rows[0].id]
-        );
-        return res.json(updateResult.rows[0]);
+      if (!existingSnapshot.empty) {
+        // Update existing attendee
+        const docRef = existingSnapshot.docs[0].ref;
+        const updateData = {
+          status,
+          checkedInAt: new Date()
+        };
+        await docRef.update(updateData);
+        
+        const updatedDoc = await docRef.get();
+        return res.json({ id: updatedDoc.id, ...updatedDoc.data() });
       } else {
-        const insertResult = await pool.query(
-          'INSERT INTO attendees ("firstName", "lastName", status, "checkedInAt") VALUES ($1, $2, $3, NOW()) RETURNING *',
-          [firstName, lastName, status]
-        );
-        return res.json(insertResult.rows[0]);
+        // Create new attendee
+        const newAttendee = {
+          firstName,
+          lastName,
+          status,
+          checkedInAt: new Date()
+        };
+        const docRef = await db.collection('attendees').add(newAttendee);
+        return res.json({ id: docRef.id, ...newAttendee });
       }
     }
 
