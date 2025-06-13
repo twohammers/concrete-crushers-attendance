@@ -3,17 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CheckCircle, 
   XCircle, 
-  Users, 
-  Clock,
-  MapPin,
   Calendar
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { TeamMember, Attendee, Game } from '@shared/schema';
+import type { Attendee, Game, TeamMember } from '@shared/schema';
 
 interface AttendanceStats {
   attending: number;
@@ -27,6 +25,7 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -101,120 +100,123 @@ export default function Home() {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-    }).format(date);
+      timeZone: 'America/Los_Angeles'
+    }).format(date) + ' PST';
   };
 
   const getTimeAgo = (date: Date) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'just now';
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
-    return `${Math.floor(diffInMinutes / 1440)} days ago`;
+    if (diffMins < 1) return 'Just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    
+    return 'More than a day ago';
   };
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  if (attendeesLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">Loading attendance data...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Game Info Card */}
+        
+        {/* Compact Next Game Info */}
         {game && (
-          <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-            <CardHeader>
-              <CardTitle className="text-center text-xl font-bold text-white">Next Game</CardTitle>
+          <Card className="overflow-hidden">
+            <CardHeader className={`py-3 ${game.opponent.includes('Holiday') ? 
+              "bg-gradient-to-r from-orange-500 to-red-500 text-white" : 
+              "bg-gradient-to-r from-primary to-blue-600 text-primary-foreground"
+            }`}>
+              <CardTitle className="text-lg text-center">
+                {game.opponent.includes('Holiday') ? 'Holiday Week' : 'Next Game'}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div>
-                  <h3 className="font-semibold text-sm opacity-90">MATCHUP</h3>
-                  <p className="text-lg font-bold">Crushers vs {game.opponent}</p>
-                  <p className="text-sm opacity-75">{game.homeAway.toUpperCase()}</p>
+            <CardContent className="p-4 bg-white">
+              {game.opponent.includes('Holiday') ? (
+                <div className="text-center">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{game.opponent}</h3>
+                  <p className="text-sm text-gray-600">{game.date}</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm opacity-90">DATE & TIME</h3>
-                  <p className="text-lg font-bold">{game.date}</p>
-                  <p className="text-sm opacity-75">{game.time}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-xs text-gray-600 uppercase">Matchup</p>
+                    <p className="font-semibold text-sm">Crushers vs {game.opponent}</p>
+                    <Badge variant="outline" className="text-xs mt-1">
+                      {game.homeAway === 'home' ? 'HOME' : 'AWAY'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 uppercase">Date & Time</p>
+                    <p className="font-semibold text-sm">{game.date}</p>
+                    <p className="text-sm text-gray-700">{game.time}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 uppercase">Location</p>
+                    <p className="font-semibold text-sm">{game.field}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm opacity-90">LOCATION</h3>
-                  <p className="text-lg font-bold">{game.field}</p>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Attendance Stats */}
-        {stats && (
-          <div className="grid grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium">{stats.attending} In</span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium">{stats.notAttending} Out</span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
-                  <span className="text-sm font-medium">{roster.length - stats.total} No Response</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Main Attendance Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
+        {/* Team Roster with Attendance */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gray-50 border-b">
+            <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Team Roster & Attendance
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Check in/out for the next game
+                <CardTitle>Team Roster & Attendance</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {game?.opponent.includes('Holiday') ? 
+                    'No game this week - enjoy the holiday!' : 
+                    'Check in/out for the next game'
+                  }
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-sm bg-orange-100 text-orange-800 px-3 py-1 rounded-full">
-                <Clock className="w-4 h-4" />
-                <span className="font-medium">active</span>
-                <span className="text-xs">(Need 10 minimum)</span>
-              </div>
+              {stats && !game?.opponent.includes('Holiday') && (
+                <div className="text-right">
+                  <div className="flex items-center gap-4 text-sm mb-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>{stats.attending} In</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span>{stats.notAttending} Out</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                      <span>{roster.length - stats.total} No Response</span>
+                    </div>
+                  </div>
+                  <Alert className={stats.attending >= 10 ? "border-green-200 bg-green-50 p-2" : "border-amber-200 bg-amber-50 p-2"}>
+                    <CheckCircle className={`w-4 h-4 ${stats.attending >= 10 ? "text-green-600" : "text-amber-600"}`} />
+                    <AlertDescription className={`text-xs ${stats.attending >= 10 ? "text-green-800" : "text-amber-800"}`}>
+                      <span className="font-medium">{stats.gameStatus}</span> (Need 10 minimum)
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {!game ? (
-              <div className="p-8 text-center text-gray-500">
-                <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium mb-2">No active game</p>
-                <p className="text-sm">Check the schedule for upcoming games.</p>
-                <Badge variant="secondary" className="mt-2">
+            {game?.opponent.includes('Holiday') ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Holiday Week</h3>
+                <p className="text-gray-600 mb-4">No games scheduled this week. Check back next week!</p>
+                <Badge variant="secondary" className="bg-orange-100 text-orange-800">
                   {game.opponent}
                 </Badge>
               </div>
