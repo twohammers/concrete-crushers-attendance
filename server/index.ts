@@ -61,10 +61,12 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   }
 });
 
-// Initialize for different environments
-if (process.env.VERCEL) {
-  // For Vercel, routes must be registered synchronously
-  // We'll handle this in the route handler
+// Initialize routes for production/Vercel
+if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+  // Register routes synchronously for Vercel
+  (async () => {
+    await registerRoutes(app);
+  })();
 } else {
   // For local development
   (async () => {
@@ -87,13 +89,5 @@ if (process.env.VERCEL) {
   })();
 }
 
-// Export handler for Vercel
-export default async function handler(req: Request, res: Response) {
-  // Initialize routes on first request if in Vercel
-  if (!app.locals.routesInitialized) {
-    await registerRoutes(app);
-    app.locals.routesInitialized = true;
-  }
-  
-  return app(req, res);
-}
+// Export the app directly for Vercel
+export default app;
