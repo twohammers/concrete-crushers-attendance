@@ -174,14 +174,13 @@
     </div>
 
     <script>
-        // Direct Firebase connection for GitHub Pages
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyA-zHF8cHXE_uKVVJROKmxjfTxTr5vQeQ4",
-            authDomain: "concrete-crushers-e92d5.firebaseapp.com",
-            projectId: "concrete-crushers-e92d5",
-            storageBucket: "concrete-crushers-e92d5.firebasestorage.app",
-            messagingSenderId: "421857055527",
-            appId: "1:421857055527:web:5e0e5c5e5e5e5e5e5e5e5e"
+            apiKey: "AIzaSyDTeaQDeyElLcs9A1Iwdtq2V_yygbBv0_w",
+            authDomain: "crushers-fdef6.firebaseapp.com",
+            projectId: "crushers-fdef6", 
+            storageBucket: "crushers-fdef6.firebasestorage.app",
+            appId: "1:808539884493:web:50e78b199b61fbccc9d284"
         };
 
         // Global state
@@ -229,29 +228,41 @@
 
         // Initialize Firebase
         function initFirebase() {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.error('Firebase initialization failed:', error);
             }
-            db = firebase.firestore();
         }
 
         // Data loading functions
         async function loadRoster() {
             try {
+                console.log('Loading roster from Firebase...');
                 const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
                 roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
                     .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+                console.log('Roster loaded:', roster.length, 'players');
                 return roster;
             } catch (error) {
                 console.error('Error loading roster:', error);
+                // Fallback: show error message in UI
+                document.getElementById('roster-checkin').innerHTML = 
+                    '<p class="text-red-600">Error connecting to database. Please refresh the page.</p>';
                 return [];
             }
         }
 
         async function loadAttendees() {
             try {
+                console.log('Loading attendees from Firebase...');
                 const snapshot = await db.collection('attendees').get();
                 attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Attendees loaded:', attendees.length, 'responses');
                 return attendees;
             } catch (error) {
                 console.error('Error loading attendees:', error);
@@ -261,6 +272,7 @@
 
         async function loadGames() {
             try {
+                console.log('Loading games from Firebase...');
                 const gamesSnapshot = await db.collection('games').orderBy('date').get();
                 games = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
@@ -269,6 +281,7 @@
                     activeGame = { id: activeSnapshot.docs[0].id, ...activeSnapshot.docs[0].data() };
                 }
                 
+                console.log('Games loaded:', games.length, 'games, active game:', activeGame?.opponent);
                 return games;
             } catch (error) {
                 console.error('Error loading games:', error);
