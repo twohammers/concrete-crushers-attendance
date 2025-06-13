@@ -31,46 +31,39 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-         // Try to connect to database with better error handling
+         // Database connection test with detailed diagnostics
     if (method === 'GET' && path === '/test') {
+      const dbUrl = process.env.DATABASE_URL;
+      const connectionInfo = {
+        hasUrl: !!dbUrl,
+        urlPrefix: dbUrl ? dbUrl.substring(0, 20) + '...' : 'none',
+        isSupabase: dbUrl ? dbUrl.includes('supabase') : false,
+        isNeon: dbUrl ? dbUrl.includes('neon') : false
+      };
+
+      // Try simplified connection with postgres library
       try {
-        // Try with regular postgres client first (correct import)
-        const pg = await import('pg');
-        const { Pool } = pg.default || pg;
-          connectionString: process.env.DATABASE_URL,
-          ssl: { rejectUnauthorized: false }
+        const postgres = await import('postgres');
+        const sql = postgres.default(dbUrl, {
+          ssl: 'require'
         });
-        const result = await pool.query('SELECT NOW() as current_time');
-        await pool.end();
+        
+        const result = await sql`SELECT NOW() as current_time`;
+        await sql.end();
+        
         return res.json({ 
           status: 'success',
-          database: 'connected (pg)',
-          time: result.rows[0]
+          database: 'connected (postgres)',
+          time: result[0],
+          connectionInfo
         });
-      } catch (pgError) {
-        try {
-          // Fallback to Neon client with WebSocket config
-          const { Pool, neonConfig } = await import('@neondatabase/serverless');
-          const ws = await import('ws');
-          neonConfig.webSocketConstructor = ws.default;
-          
-          const pool = new Pool({ 
-            connectionString: process.env.DATABASE_URL
-          });
-          const result = await pool.query('SELECT NOW() as current_time');
-          return res.json({ 
-            status: 'success',
-            database: 'connected (neon)',
-            time: result.rows[0]
-          });
-        } catch (neonError) {
-          return res.status(500).json({ 
-            error: 'Database connection failed',
-            pgError: pgError instanceof Error ? pgError.message : String(pgError),
-            neonError: neonError instanceof Error ? neonError.message : String(neonError),
-            connectionString: process.env.DATABASE_URL ? 'present' : 'missing'
-          });
-        }
+      } catch (postgresError) {
+        return res.status(500).json({ 
+          error: 'Database connection failed',
+          postgresError: postgresError instanceof Error ? postgresError.message : String(postgresError),
+          connectionInfo,
+          suggestion: 'Check if DATABASE_URL is correctly formatted for Supabase'
+        });
       }
     }
 
