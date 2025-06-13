@@ -77,7 +77,9 @@
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0",
     "pg": "^8.11.3",
-    "@types/pg": "^8.10.9"
+    "@types/pg": "^8.10.9",
+    "firebase": "^10.x.x",
+    "firebase-admin": "^12.x.x"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.2.7",
