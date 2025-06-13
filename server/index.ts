@@ -1,3 +1,18 @@
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit,
+  addDoc,
+  deleteDoc,
+  getDoc 
+} from 'firebase/firestore';
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -12,93 +27,86 @@ export default async function handler(req: any, res: any) {
     const { method, url } = req;
     const path = url.replace('/api', '');
 
-       // Environment check endpoint
+    // Environment check endpoint
     if (method === 'GET' && path === '/debug') {
       return res.json({
         nodeVersion: process.version,
         platform: process.platform,
-        hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
-        envKeys: Object.keys(process.env).filter(k => k.includes('FIREBASE')),
-        allEnvKeys: Object.keys(process.env).length,
-        timestamp: new Date().toISOString(),
-        projectId: process.env.FIREBASE_PROJECT_ID || 'not found',
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ? 'present' : 'missing'
-      });
-    }
-    // Check if Firebase environment variables exist  
-    if (!process.env.FIREBASE_PROJECT_ID) {
-      return res.status(500).json({ 
-        error: 'Firebase environment variables not found',
-        required: ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL']
+        firebaseConfigured: true,
+        timestamp: new Date().toISOString()
       });
     }
 
     // Firebase connection test
     if (method === 'GET' && path === '/test') {
       try {
-        const { db } = await import('./firebase.js');
+        const { db } = await import('./firebase-config.js');
         
         // Test Firebase connection by creating a simple document
-        const testDoc = db.collection('test').doc('connection');
-        await testDoc.set({ timestamp: new Date(), test: true });
+        const testDocRef = doc(db, 'test', 'connection');
+        await setDoc(testDocRef, { timestamp: new Date(), test: true });
         
         // Read it back
-        const doc = await testDoc.get();
-        const data = doc.data();
+        const docSnap = await getDoc(testDocRef);
+        const data = docSnap.data();
         
         // Clean up
-        await testDoc.delete();
+        await deleteDoc(testDocRef);
         
         return res.json({ 
           status: 'success',
-          database: 'connected (firebase)',
-          time: data?.timestamp,
-          projectId: process.env.FIREBASE_PROJECT_ID
+          database: 'connected (firebase web)',
+          time: data?.timestamp
         });
       } catch (firebaseError) {
         return res.status(500).json({ 
           error: 'Firebase connection failed',
           firebaseError: firebaseError instanceof Error ? firebaseError.message : String(firebaseError),
-          suggestion: 'Check Firebase environment variables'
+          suggestion: 'Check Firebase configuration'
         });
       }
     }
 
-    const { db } = await import('./firebase.js');
+    const { db } = await import('./firebase-config.js');
 
     // Core endpoints for the app
     if (method === 'GET' && path === '/roster') {
-      const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
-      const roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const rosterQuery = query(collection(db, 'teamRoster'), where('isActive', '==', true));
+      const snapshot = await getDocs(rosterQuery);
+      const roster = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       return res.json(roster);
     }
 
     if (method === 'GET' && path === '/game') {
-      const snapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
+      const gameQuery = query(collection(db, 'games'), where('isActive', '==', true), limit(1));
+      const snapshot = await getDocs(gameQuery);
       const game = snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } : null;
       return res.json(game);
     }
 
     if (method === 'GET' && path === '/games') {
-      const snapshot = await db.collection('games').orderBy('date').get();
-      const games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const gamesQuery = query(collection(db, 'games'), orderBy('date'));
+      const snapshot = await getDocs(gamesQuery);
+      const games = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       return res.json(games);
     }
 
     if (method === 'GET' && path === '/attendees') {
-      const snapshot = await db.collection('attendees').orderBy('checkedInAt', 'desc').get();
-      const attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const attendeesQuery = query(collection(db, 'attendees'), orderBy('checkedInAt', 'desc'));
+      const snapshot = await getDocs(attendeesQuery);
+      const attendees = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       return res.json(attendees);
     }
 
     if (method === 'GET' && path === '/stats') {
-      const snapshot = await db.collection('attendees').get();
-      const attendees = snapshot.docs.map(doc => doc.data());
+      const attendeesSnapshot = await getDocs(collection(db, 'attendees'));
+      const attendees = attendeesSnapshot.docs.map((doc: any) => doc.data());
       
-      const attending = attendees.filter(a => a.status === 'attending').length;
-      const notAttending = attendees.filter(a => a.status === 'not_attending').length;
+      const attending = attendees.filter((a: any) => a.status === 'attending').length;
+      const notAttending = attendees.filter((a: any) => a.status === 'not_attending').length;
       
-      const gameSnapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
+      const gameQuery = query(collection(db, 'games'), where('isActive', '==', true), limit(1));
+      const gameSnapshot = await getDocs(gameQuery);
       
       return res.json({
         attending,
@@ -112,10 +120,12 @@ export default async function handler(req: any, res: any) {
       const { firstName, lastName, status } = req.body;
       
       // Check if attendee already exists
-      const existingSnapshot = await db.collection('attendees')
-        .where('firstName', '==', firstName)
-        .where('lastName', '==', lastName)
-        .get();
+      const existingQuery = query(
+        collection(db, 'attendees'),
+        where('firstName', '==', firstName),
+        where('lastName', '==', lastName)
+      );
+      const existingSnapshot = await getDocs(existingQuery);
 
       if (!existingSnapshot.empty) {
         // Update existing attendee
@@ -124,9 +134,9 @@ export default async function handler(req: any, res: any) {
           status,
           checkedInAt: new Date()
         };
-        await docRef.update(updateData);
+        await updateDoc(docRef, updateData);
         
-        const updatedDoc = await docRef.get();
+        const updatedDoc = await getDoc(docRef);
         return res.json({ id: updatedDoc.id, ...updatedDoc.data() });
       } else {
         // Create new attendee
@@ -136,7 +146,7 @@ export default async function handler(req: any, res: any) {
           status,
           checkedInAt: new Date()
         };
-        const docRef = await db.collection('attendees').add(newAttendee);
+        const docRef = await addDoc(collection(db, 'attendees'), newAttendee);
         return res.json({ id: docRef.id, ...newAttendee });
       }
     }
