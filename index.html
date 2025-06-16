@@ -73,10 +73,17 @@
                     </div>
                 </div>
                 
-                <!-- Game Status Banner -->
-                <div id="game-status-banner" class="hidden">
-                    <div class="bg-red-500 text-white text-center py-2 px-4 rounded-lg font-medium">
-                        <span id="game-status-text"></span>
+                <!-- Progress Bar -->
+                <div id="progress-section" class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">Game Progress</span>
+                        <span class="text-sm text-gray-600" id="progress-text">0 of 10 players needed</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="text-center">
+                        <span id="progress-message" class="text-sm font-medium text-gray-600">10 more needed!</span>
                     </div>
                 </div>
             </div>
@@ -443,14 +450,23 @@
             document.getElementById('no-response-count').textContent = noResponse;
             document.getElementById('game-status-display').textContent = gameStatus;
             
-            // Show/hide status banner
-            const banner = document.getElementById('game-status-banner');
-            const bannerText = document.getElementById('game-status-text');
-            if (attending < 10) {
-                banner.classList.remove('hidden');
-                bannerText.textContent = statusText;
+            // Update progress bar
+            const progressPercent = Math.min((attending / 10) * 100, 100);
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const progressMessage = document.getElementById('progress-message');
+            
+            progressBar.style.width = `${progressPercent}%`;
+            progressText.textContent = `${attending} of 10 players confirmed`;
+            
+            if (attending >= 10) {
+                progressBar.classList.remove('bg-blue-600');
+                progressBar.classList.add('bg-green-500');
+                progressMessage.textContent = 'Game confirmed!';
             } else {
-                banner.classList.add('hidden');
+                progressBar.classList.remove('bg-green-500');
+                progressBar.classList.add('bg-blue-600');
+                progressMessage.textContent = `${needed} more needed!`;
             }
 
             // Roster check-in
@@ -473,7 +489,7 @@
                     </div>
                     <div class="flex gap-2">
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'attending')" 
-                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'attending' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">In</button>
+                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'attending' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">In</button>
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'not_attending')" 
                                 class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'not_attending' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">Out</button>
                     </div>
