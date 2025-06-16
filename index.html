@@ -54,18 +54,29 @@
                 </div>
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="card text-center">
-                        <div class="text-3xl font-bold text-green-600" id="attending-count">-</div>
-                        <div class="text-sm text-gray-600">Attending</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-green-600" id="attending-count">-</div>
+                        <div class="text-sm text-gray-600 mt-1">Attending</div>
                     </div>
-                    <div class="card text-center">
-                        <div class="text-3xl font-bold text-red-600" id="not-attending-count">-</div>
-                        <div class="text-sm text-gray-600">Not Attending</div>
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-red-600" id="not-attending-count">-</div>
+                        <div class="text-sm text-gray-600 mt-1">Not Attending</div>
                     </div>
-                    <div class="card text-center">
-                        <div class="text-lg font-semibold" id="game-status">-</div>
-                        <div class="text-sm text-gray-600">Game Status</div>
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-gray-500" id="no-response-count">-</div>
+                        <div class="text-sm text-gray-600 mt-1">No Response</div>
+                    </div>
+                    <div class="card text-center p-6">
+                        <div class="text-2xl font-bold text-blue-600" id="game-status-display">-</div>
+                        <div class="text-sm text-gray-600 mt-1">Game Status</div>
+                    </div>
+                </div>
+                
+                <!-- Game Status Banner -->
+                <div id="game-status-banner" class="hidden">
+                    <div class="bg-red-500 text-white text-center py-2 px-4 rounded-lg font-medium">
+                        <span id="game-status-text"></span>
                     </div>
                 </div>
             </div>
@@ -74,7 +85,7 @@
             <div class="p-4">
                 <div class="card">
                     <h2 class="text-xl font-bold mb-4">Quick Check-in</h2>
-                    <div id="roster-checkin" class="space-y-2 max-h-96 overflow-y-auto">
+                    <div id="roster-checkin" class="space-y-2">
                         <div class="loading h-6"></div>
                         <div class="loading h-6"></div>
                         <div class="loading h-6"></div>
@@ -421,12 +432,26 @@
             // Stats
             const attending = attendees.filter(a => a.status === 'attending').length;
             const notAttending = attendees.filter(a => a.status === 'not_attending').length;
+            const totalResponses = attendees.length;
+            const noResponse = roster.length - totalResponses;
             const needed = Math.max(0, 10 - attending);
-            const gameStatus = attending >= 10 ? 'Game confirmed!' : `${attending}/10 - ${needed} more needed!`;
-
+            const gameStatus = attending >= 10 ? 'Game confirmed!' : `${attending}/10`;
+            const statusText = attending >= 10 ? 'Game confirmed!' : `${attending}/10 - ${needed} more needed!`;
+            
             document.getElementById('attending-count').textContent = attending;
             document.getElementById('not-attending-count').textContent = notAttending;
-            document.getElementById('game-status').textContent = gameStatus;
+            document.getElementById('no-response-count').textContent = noResponse;
+            document.getElementById('game-status-display').textContent = gameStatus;
+            
+            // Show/hide status banner
+            const banner = document.getElementById('game-status-banner');
+            const bannerText = document.getElementById('game-status-text');
+            if (attending < 10) {
+                banner.classList.remove('hidden');
+                bannerText.textContent = statusText;
+            } else {
+                banner.classList.add('hidden');
+            }
 
             // Roster check-in
             document.getElementById('roster-checkin').innerHTML = roster.map(member => {
@@ -434,18 +459,23 @@
                 const status = attendee?.status;
                 
                 return `
-                <div class="flex items-center justify-between p-3 border rounded-lg ${status === 'attending' ? 'bg-green-50 border-green-200' : status === 'not_attending' ? 'bg-red-50 border-red-200' : ''}">
+                <div class="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-center gap-3">
-                        <span class="font-medium">${member.firstName} ${member.lastName}</span>
-                        ${status ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status === 'attending' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${status === 'attending' ? '✓ Attending' : '✗ Not Attending'}
-                        </span>` : '<span class="text-gray-500 text-sm">No response</span>'}
+                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="font-bold text-gray-600 text-sm">${member.firstName[0]}${member.lastName[0]}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-medium text-gray-900">${member.firstName} ${member.lastName}</span>
+                            ${status ? `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium ${status === 'attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${status === 'attending' ? '✓ Attending' : '✗ Not Attending'}
+                            </span>` : '<span class="text-gray-500 text-sm">No response</span>'}
+                        </div>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'attending')" 
-                                class="btn-success ${status === 'attending' ? 'opacity-50' : ''}">In</button>
+                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'attending' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}">In</button>
                         <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'not_attending')" 
-                                class="btn-danger ${status === 'not_attending' ? 'opacity-50' : ''}">Out</button>
+                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'not_attending' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">Out</button>
                     </div>
                 </div>`;
             }).join('');
@@ -453,19 +483,18 @@
 
         function renderRoster() {
             document.getElementById('roster-list').innerHTML = roster.map(member => `
-                <div class="flex items-center justify-between p-4 border rounded-lg">
+                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span class="font-bold text-blue-600">${member.firstName[0]}${member.lastName[0]}</span>
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="font-bold text-gray-600 text-sm">${member.firstName[0]}${member.lastName[0]}</span>
                         </div>
                         <div>
-                            <h3 class="font-semibold">${member.firstName} ${member.lastName}</h3>
-                            <p class="text-gray-600">${member.position} • #${member.jerseyNumber}</p>
+                            <h3 class="font-semibold text-gray-900">${member.firstName} ${member.lastName}</h3>
                         </div>
                     </div>
                     <div class="text-right">
                         <div class="text-sm text-gray-600">Games Played</div>
-                        <div class="font-bold">${member.gamesPlayed || 0}</div>
+                        <div class="font-bold text-gray-900">${member.gamesPlayed || 0}</div>
                     </div>
                 </div>
             `).join('');
