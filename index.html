@@ -404,7 +404,7 @@
                         <div class="text-xl font-bold text-white">NEXT GAME</div>
                         <div class="text-lg font-semibold text-blue-100 mt-1">vs ${activeGame.opponent}</div>
                         <div class="text-blue-100 text-sm mt-2">
-                            <div>${formatDate(activeGame.date)} at ${activeGame.time}</div>
+                            <div>${formatDate(activeGame.date)} at ${formatTime(activeGame.time)}</div>
                             <div class="mt-1">${activeGame.location}</div>
                         </div>
                         <div class="mt-2">
@@ -477,7 +477,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="font-bold">vs ${game.opponent}</h3>
-                            <p class="text-gray-600">${formatDate(game.date)} • ${game.time}</p>
+                            <p class="text-gray-600">${formatDate(game.date)} • ${formatTime(game.time)}</p>
                             <p class="text-gray-600">${game.location}</p>
                         </div>
                         <div class="text-right">
@@ -518,7 +518,7 @@
                 <div class="flex items-center justify-between p-3 border rounded-lg ${game.isActive ? 'border-blue-500 bg-blue-50' : ''}">
                     <div>
                         <span class="font-medium">vs ${game.opponent}</span>
-                        <span class="text-gray-600 ml-2">${formatDate(game.date)}</span>
+                        <span class="text-gray-600 ml-2">${formatDate(game.date)} • ${formatTime(game.time)}</span>
                     </div>
                     ${game.isActive ? 
                         '<span class="badge badge-success">Active</span>' : 
@@ -533,8 +533,29 @@
             return new Date(dateString).toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
-                day: 'numeric'
+                day: 'numeric',
+                timeZone: 'America/Los_Angeles'
             });
+        }
+
+        function formatTime(timeString) {
+            // If timeString is already formatted (like "7:10 PM"), return as is
+            if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
+                return timeString;
+            }
+            
+            // Otherwise, try to parse and format with PST
+            try {
+                const date = new Date(`2000-01-01 ${timeString}`);
+                return date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                    timeZone: 'America/Los_Angeles'
+                });
+            } catch (error) {
+                return timeString; // Return original if parsing fails
+            }
         }
 
         async function loadPageData() {
