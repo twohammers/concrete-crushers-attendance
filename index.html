@@ -530,7 +530,20 @@
 
         // Helper functions
         function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', {
+            // Parse date as local time to avoid timezone shifting
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                // Create date in local timezone (month is 0-indexed)
+                const date = new Date(parts[2], parts[0] - 1, parts[1]);
+                return date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'America/Los_Angeles'
+                });
+            }
+            // Fallback for other date formats
+            return new Date(dateString + ' PST').toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
