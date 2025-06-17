@@ -575,36 +575,74 @@
 
         // Helper functions
         function formatDate(dateString) {
-            // Parse date as local time to avoid timezone shifting
-            const parts = dateString.split('/');
-            if (parts.length === 3) {
-                // Create date in local timezone (month is 0-indexed)
-                const date = new Date(parts[2], parts[0] - 1, parts[1]);
+            try {
+                // Parse date as local time to avoid timezone shifting
+                const parts = dateString.split('/');
+                if (parts.length === 3) {
+                    // Create date in local timezone (month is 0-indexed)
+                    const date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    
+                    // Check if date is valid
+                    if (isNaN(date.getTime())) {
+                        return dateString; // Return original if invalid
+                    }
+                    
+                    return date.toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        timeZone: 'America/Los_Angeles'
+                    });
+                }
+                
+                // Try ISO format or other standard formats
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return dateString; // Return original if invalid
+                }
+                
                 return date.toLocaleDateString('en-US', {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
                     timeZone: 'America/Los_Angeles'
                 });
+            } catch (error) {
+                console.error('Date formatting error:', error, dateString);
+                return dateString; // Return original if parsing fails
             }
-            // Fallback for other date formats
-            return new Date(dateString + ' PST').toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                timeZone: 'America/Los_Angeles'
-            });
         }
 
         function formatTime(timeString) {
-            // If timeString is already formatted (like "7:10 PM"), return as is
-            if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
-                return timeString;
-            }
-            
-            // Otherwise, try to parse and format with PST
             try {
-                const date = new Date(`2000-01-01 ${timeString}`);
+                // If timeString is already formatted (like "7:10 PM"), return as is
+                if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
+                    return timeString;
+                }
+                
+                // Handle empty or undefined timeString
+                if (!timeString) {
+                    return '';
+                }
+                
+                // Try multiple parsing approaches for better mobile compatibility
+                let date;
+                
+                // Try ISO format first (more reliable on mobile)
+                if (timeString.includes(':')) {
+                    const [hours, minutes] = timeString.split(':');
+                    date = new Date();
+                    date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+                } else {
+                    // Fallback to string parsing
+                    date = new Date(`2000-01-01T${timeString}:00`);
+                }
+                
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return timeString; // Return original if invalid
+                }
+                
                 return date.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -612,6 +650,7 @@
                     timeZone: 'America/Los_Angeles'
                 });
             } catch (error) {
+                console.error('Time formatting error:', error, timeString);
                 return timeString; // Return original if parsing fails
             }
         }
