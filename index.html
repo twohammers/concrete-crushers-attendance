@@ -3,70 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concrete Crushers Team Management</title>
+    <title>Concrete Crushers - Game Attendance</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        .card { @apply bg-white rounded-lg shadow-sm border p-4; }
-        .btn-primary { @apply bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors; }
-        .btn-secondary { @apply bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-medium transition-colors; }
-        .btn-success { @apply bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors; }
-        .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-medium transition-colors; }
-        .badge { @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors; }
+        .btn-secondary { @apply bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors; }
+        .btn-success { @apply bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors; }
+        .btn-danger { @apply bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors; }
+        .card { @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6; }
+        .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
         .badge-success { @apply bg-green-100 text-green-800; }
-        .badge-warning { @apply bg-orange-100 text-orange-800; }
+        .badge-warning { @apply bg-yellow-100 text-yellow-800; }
+        .badge-danger { @apply bg-red-100 text-red-800; }
+        .input { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500; }
         .loading { @apply animate-pulse bg-gray-200 rounded; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
     <div id="app">
         <!-- Navigation -->
         <nav class="bg-white shadow-sm border-b">
-            <div class="max-w-6xl mx-auto px-4">
-                <div class="flex items-center justify-between h-16">
+            <div class="max-w-6xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                             <span class="text-white font-bold text-sm">CC</span>
                         </div>
                         <h1 class="text-xl font-bold text-gray-900">Concrete Crushers</h1>
                     </div>
-                    <div class="flex gap-1">
-                        <button onclick="showPage('home')" class="nav-btn" id="nav-home">Home</button>
-                        <button onclick="showPage('roster')" class="nav-btn" id="nav-roster">Roster</button>
-                        <button onclick="showPage('schedule')" class="nav-btn" id="nav-schedule">Schedule</button>
-                        <button onclick="showPage('admin')" class="nav-btn" id="nav-admin">Admin</button>
+                    <div class="flex gap-2">
+                        <button onclick="showPage('home')" class="btn-secondary" id="home-nav">Home</button>
+                        <button onclick="showPage('roster')" class="btn-secondary" id="roster-nav">Roster</button>
+                        <button onclick="showPage('schedule')" class="btn-secondary" id="schedule-nav">Schedule</button>
+                        <button onclick="showPage('admin')" class="btn-secondary" id="admin-nav">Admin</button>
                     </div>
                 </div>
             </div>
         </nav>
 
         <!-- Home Page -->
-        <div id="home-page" class="page">
-            <div class="max-w-4xl mx-auto p-4 space-y-6">
-                <!-- Game Info Header -->
-                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6">
-                    <div id="game-info" class="text-center">
-                        <div class="loading h-12"></div>
-                    </div>
+        <div id="home-page" class="page max-w-6xl mx-auto">
+            <!-- Fixed Header Section -->
+            <div class="sticky top-0 bg-white z-10 p-4 space-y-4 border-b shadow-sm">
+                <!-- Featured Game Info Card -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-4 shadow-lg">
+                    <div id="game-info" class="py-2"></div>
                 </div>
 
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="card text-center">
-                        <div class="text-2xl font-bold text-green-600" id="attending-count">-</div>
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-green-600" id="attending-count">-</div>
                         <div class="text-sm text-gray-600 mt-1">Attending</div>
                     </div>
-                    <div class="card text-center">
-                        <div class="text-2xl font-bold text-red-600" id="not-attending-count">-</div>
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-red-600" id="not-attending-count">-</div>
                         <div class="text-sm text-gray-600 mt-1">Not Attending</div>
                     </div>
-                    <div class="card text-center">
-                        <div class="text-2xl font-bold text-gray-600" id="no-response-count">-</div>
+                    <div class="card text-center p-6">
+                        <div class="text-4xl font-bold text-gray-500" id="no-response-count">-</div>
                         <div class="text-sm text-gray-600 mt-1">No Response</div>
                     </div>
-                    <div class="card text-center">
-                        <div class="text-lg font-semibold text-blue-600" id="game-status-display">-</div>
+                    <div class="card text-center p-6">
+                        <div class="text-2xl font-bold text-blue-600" id="game-status-display">-</div>
                         <div class="text-sm text-gray-600 mt-1">Game Status</div>
                     </div>
                 </div>
@@ -88,49 +90,63 @@
 
             <!-- Scrollable Roster Section -->
             <div class="p-4">
-                <h2 class="text-lg font-bold mb-3">Quick Check-in</h2>
-                <div id="roster-checkin" class="space-y-3">
-                    <div class="loading h-12"></div>
+                <div class="card">
+                    <h2 class="text-xl font-bold mb-4">Quick Check-in</h2>
+                    <div id="roster-checkin" class="space-y-2">
+                        <div class="loading h-6"></div>
+                        <div class="loading h-6"></div>
+                        <div class="loading h-6"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Roster Page -->
-        <div id="roster-page" class="page hidden">
-            <div class="max-w-4xl mx-auto p-4">
-                <h1 class="text-2xl font-bold mb-6">Team Roster</h1>
+        <div id="roster-page" class="page hidden max-w-6xl mx-auto p-4">
+            <div class="card">
+                <h2 class="text-2xl font-bold mb-6">Team Roster</h2>
                 <div id="roster-list" class="space-y-3">
-                    <div class="loading h-12"></div>
+                    <div class="loading h-16"></div>
+                    <div class="loading h-16"></div>
+                    <div class="loading h-16"></div>
                 </div>
             </div>
         </div>
 
         <!-- Schedule Page -->
-        <div id="schedule-page" class="page hidden">
-            <div class="max-w-4xl mx-auto p-4">
-                <h1 class="text-2xl font-bold mb-6">Game Schedule</h1>
+        <div id="schedule-page" class="page hidden max-w-6xl mx-auto p-4">
+            <div class="card">
+                <h2 class="text-2xl font-bold mb-6">Summer Ball 2025 Schedule</h2>
                 <div id="schedule-list" class="space-y-4">
-                    <div class="loading h-12"></div>
+                    <div class="loading h-20"></div>
+                    <div class="loading h-20"></div>
+                    <div class="loading h-20"></div>
                 </div>
             </div>
         </div>
 
         <!-- Admin Page -->
-        <div id="admin-page" class="page hidden">
-            <!-- Admin Login -->
-            <div id="admin-login" class="max-w-md mx-auto p-4 mt-20">
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4">Admin Login</h2>
-                    <input type="password" id="admin-password" placeholder="Enter admin password" 
-                           class="w-full px-3 py-2 border rounded-lg mb-4">
-                    <button onclick="adminLogin()" class="btn-primary w-full">Login</button>
+        <div id="admin-page" class="page hidden max-w-6xl mx-auto p-4">
+            <!-- Password Screen -->
+            <div id="admin-login" class="max-w-md mx-auto mt-20">
+                <div class="card text-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-blue-600 text-2xl">🔒</span>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">Admin Access</h2>
+                    <p class="text-gray-600 mb-6">Enter password to access admin controls</p>
+                    <form onsubmit="adminLogin(event)" class="space-y-4">
+                        <input type="password" id="admin-password" placeholder="Enter admin password" class="input" required>
+                        <button type="submit" class="btn-primary w-full">Access Admin</button>
+                        <button type="button" onclick="showPage('home')" class="btn-secondary w-full">Back to Home</button>
+                    </form>
                 </div>
             </div>
 
-            <!-- Admin Dashboard -->
-            <div id="admin-dashboard" class="hidden max-w-6xl mx-auto p-4 space-y-6">
+            <!-- Admin Panel -->
+            <div id="admin-panel" class="hidden space-y-6">
                 <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+                    <h1 class="text-2xl font-bold">Admin Panel</h1>
                     <button onclick="adminLogout()" class="btn-secondary">Logout</button>
                 </div>
 
@@ -182,53 +198,86 @@
             appId: "1:808539884493:web:50e78b199b61fbccc9d284"
         };
 
-        // Initialize Firebase
-        let db;
-        function initFirebase() {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        }
-
-        // Global variables
+        // Global state
         let currentPage = 'home';
+        let isAdminAuthenticated = false;
         let roster = [];
         let attendees = [];
         let games = [];
         let activeGame = null;
-        let isAdminAuthenticated = false;
+        let db = null;
 
-        // Navigation
-        function showPage(page) {
+        // Page navigation
+        window.showPage = function(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-100', 'text-blue-700');
-                btn.classList.add('text-gray-600', 'hover:text-gray-900');
-            });
+            document.getElementById(page + '-page').classList.remove('hidden');
             
-            document.getElementById(`${page}-page`).classList.remove('hidden');
-            document.getElementById(`nav-${page}`).classList.add('bg-blue-100', 'text-blue-700');
-            document.getElementById(`nav-${page}`).classList.remove('text-gray-600', 'hover:text-gray-900');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+            document.getElementById(page + '-nav').classList.add('bg-blue-600', 'text-white');
             
             currentPage = page;
             loadPageData();
+        };
+
+        // Admin authentication
+        window.adminLogin = function(event) {
+            event.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            if (password.toLowerCase() === 'dixie') {
+                isAdminAuthenticated = true;
+                document.getElementById('admin-login').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                loadAdminData();
+            } else {
+                alert('Incorrect password. Please try again.');
+                document.getElementById('admin-password').value = '';
+            }
+        };
+
+        window.adminLogout = function() {
+            isAdminAuthenticated = false;
+            document.getElementById('admin-login').classList.remove('hidden');
+            document.getElementById('admin-panel').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+        };
+
+        // Initialize Firebase
+        function initFirebase() {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.error('Firebase initialization failed:', error);
+            }
         }
 
         // Data loading functions
         async function loadRoster() {
             try {
-                const snapshot = await db.collection('roster').orderBy('firstName').get();
-                roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Loading roster from Firebase...');
+                const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
+                roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+                console.log('Roster loaded:', roster.length, 'players');
                 return roster;
             } catch (error) {
                 console.error('Error loading roster:', error);
+                // Fallback: show error message in UI
+                document.getElementById('roster-checkin').innerHTML = 
+                    '<p class="text-red-600">Error connecting to database. Please refresh the page.</p>';
                 return [];
             }
         }
 
         async function loadAttendees() {
             try {
+                console.log('Loading attendees from Firebase...');
                 const snapshot = await db.collection('attendees').get();
                 attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Attendees loaded:', attendees.length, 'responses');
                 return attendees;
             } catch (error) {
                 console.error('Error loading attendees:', error);
@@ -238,9 +287,16 @@
 
         async function loadGames() {
             try {
-                const snapshot = await db.collection('games').orderBy('date').get();
-                games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                activeGame = games.find(game => game.isActive) || games[0];
+                console.log('Loading games from Firebase...');
+                const gamesSnapshot = await db.collection('games').orderBy('date').get();
+                games = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                const activeSnapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
+                if (!activeSnapshot.empty) {
+                    activeGame = { id: activeSnapshot.docs[0].id, ...activeSnapshot.docs[0].data() };
+                }
+                
+                console.log('Games loaded:', games.length, 'games, active game:', activeGame?.opponent);
                 return games;
             } catch (error) {
                 console.error('Error loading games:', error);
@@ -293,59 +349,52 @@
         };
 
         // Admin functions
-        window.adminLogin = function() {
-            const password = document.getElementById('admin-password').value.toLowerCase();
-            if (password === 'dixie') {
-                isAdminAuthenticated = true;
-                document.getElementById('admin-login').classList.add('hidden');
-                document.getElementById('admin-dashboard').classList.remove('hidden');
-                loadAdminData();
-            } else {
-                alert('Incorrect password');
+        window.clearAttendee = async function(attendeeId) {
+            try {
+                await db.collection('attendees').doc(attendeeId).delete();
+                await loadAttendees();
+                updateDisplay();
+            } catch (error) {
+                console.error('Error clearing attendee:', error);
+                alert('Error clearing attendance. Please try again.');
             }
         };
 
-        window.adminLogout = function() {
-            isAdminAuthenticated = false;
-            document.getElementById('admin-login').classList.remove('hidden');
-            document.getElementById('admin-dashboard').classList.add('hidden');
-            document.getElementById('admin-password').value = '';
-        };
-
         window.clearAllResponses = async function() {
-            if (confirm('Are you sure you want to clear all attendance responses?')) {
+            if (confirm('Are you sure you want to clear all responses?')) {
                 try {
                     const snapshot = await db.collection('attendees').get();
                     const batch = db.batch();
-                    snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
                     await batch.commit();
                     
-                    attendees = [];
+                    await loadAttendees();
                     updateDisplay();
-                    alert('All responses cleared successfully');
                 } catch (error) {
-                    console.error('Error clearing responses:', error);
-                    alert('Error clearing responses. Please try again.');
+                    console.error('Error clearing all responses:', error);
+                    alert('Error clearing all responses. Please try again.');
                 }
             }
         };
 
         window.setActiveGame = async function(gameId) {
             try {
-                // Update all games to not active
+                // First, set all games to inactive
+                const allGamesSnapshot = await db.collection('games').get();
                 const batch = db.batch();
-                games.forEach(game => {
-                    const gameRef = db.collection('games').doc(game.id);
-                    batch.update(gameRef, { isActive: game.id === gameId });
+                
+                allGamesSnapshot.docs.forEach(doc => {
+                    batch.update(doc.ref, { isActive: false });
                 });
+                
+                // Set the selected game to active
+                batch.update(db.collection('games').doc(gameId), { isActive: true });
+                
                 await batch.commit();
-                
-                // Update local state
-                games.forEach(game => game.isActive = game.id === gameId);
-                activeGame = games.find(game => game.id === gameId);
+                await loadGames();
                 updateDisplay();
-                
-                alert('Active game updated successfully');
             } catch (error) {
                 console.error('Error setting active game:', error);
                 alert('Error setting active game. Please try again.');
@@ -486,101 +535,76 @@
         }
 
         function renderAdmin() {
+            // Admin stats
             const attending = attendees.filter(a => a.status === 'attending').length;
             const notAttending = attendees.filter(a => a.status === 'not_attending').length;
-            const gameStatus = attending >= 10 ? 'Game Confirmed!' : `${attending}/10 - ${10 - attending} more needed`;
+            const gameStatus = attending >= 10 ? 'Game confirmed' : 'Need more players';
 
             document.getElementById('admin-attending').textContent = attending;
             document.getElementById('admin-not-attending').textContent = notAttending;
             document.getElementById('admin-status').textContent = gameStatus;
 
-            // Attendee list
-            document.getElementById('admin-attendees').innerHTML = attendees.map(attendee => `
-                <div class="flex items-center justify-between p-3 border rounded-lg">
-                    <span class="font-medium">${attendee.firstName} ${attendee.lastName}</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${attendee.status === 'attending' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                        ${attendee.status === 'attending' ? '✓ Attending' : '✗ Not Attending'}
-                    </span>
-                </div>
-            `).join('') || '<p class="text-gray-500 text-center py-4">No responses yet</p>';
+            // Admin attendees
+            document.getElementById('admin-attendees').innerHTML = attendees.length ?
+                attendees.map(attendee => `
+                    <div class="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                            <span class="font-medium">${attendee.firstName} ${attendee.lastName}</span>
+                            <span class="badge ml-2 ${attendee.status === 'attending' ? 'badge-success' : 'badge-danger'}">
+                                ${attendee.status === 'attending' ? 'Attending' : 'Not Attending'}
+                            </span>
+                        </div>
+                        <button onclick="clearAttendee('${attendee.id}')" class="btn-danger">Clear</button>
+                    </div>
+                `).join('') : '<p class="text-gray-600">No responses yet</p>';
 
-            // Games list
+            // Admin games
             document.getElementById('admin-games').innerHTML = games.map(game => `
                 <div class="flex items-center justify-between p-3 border rounded-lg ${game.isActive ? 'border-blue-500 bg-blue-50' : ''}">
                     <div>
-                        <div class="font-medium">vs ${game.opponent}</div>
-                        <div class="text-sm text-gray-600">${formatDate(game.date)} • ${formatTime(game.time)}</div>
+                        <span class="font-medium">vs ${game.opponent}</span>
+                        <span class="text-gray-600 ml-2">${formatDate(game.date)} • ${formatTime(game.time)}</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        ${game.isActive ? '<span class="text-blue-600 font-medium text-sm">Active</span>' : 
+                    ${game.isActive ? 
+                        '<span class="badge badge-success">Active</span>' : 
                         `<button onclick="setActiveGame('${game.id}')" class="btn-primary">Set Active</button>`
                     }
-                    </div>
                 </div>
             `).join('');
         }
 
         // Helper functions
         function formatDate(dateString) {
-            try {
-                const parts = dateString.split('/');
-                if (parts.length === 3) {
-                    const month = parseInt(parts[0], 10);
-                    const day = parseInt(parts[1], 10);
-                    const year = parseInt(parts[2], 10);
-                    
-                    // Use ISO string format to avoid timezone issues
-                    const isoString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T12:00:00.000Z`;
-                    const date = new Date(isoString);
-                    
-                    if (isNaN(date.getTime())) {
-                        return dateString;
-                    }
-                    
-                    return date.toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        timeZone: 'UTC'
-                    });
-                }
-                return dateString;
-            } catch (error) {
-                console.error('Date formatting error:', error, dateString);
-                return dateString;
+            // Parse date as local time to avoid timezone shifting
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                // Create date in local timezone (month is 0-indexed)
+                const date = new Date(parts[2], parts[0] - 1, parts[1]);
+                return date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'America/Los_Angeles'
+                });
             }
+            // Fallback for other date formats
+            return new Date(dateString + ' PST').toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'America/Los_Angeles'
+            });
         }
 
         function formatTime(timeString) {
+            // If timeString is already formatted (like "7:10 PM"), return as is
+            if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
+                return timeString;
+            }
+            
+            // Otherwise, try to parse and format with PST
             try {
-                // If timeString is already formatted (like "7:10 PM"), return as is
-                if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
-                    return timeString;
-                }
-                
-                // Handle empty or undefined timeString
-                if (!timeString) {
-                    return '';
-                }
-                
-                // Try multiple parsing approaches for better mobile compatibility
-                let date;
-                
-                // Try ISO format first (more reliable on mobile)
-                if (timeString.includes(':')) {
-                    const [hours, minutes] = timeString.split(':');
-                    date = new Date();
-                    date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-                } else {
-                    // Fallback to string parsing
-                    date = new Date(`2000-01-01T${timeString}:00`);
-                }
-                
-                // Check if date is valid
-                if (isNaN(date.getTime())) {
-                    return timeString; // Return original if invalid
-                }
-                
+                const date = new Date(`2000-01-01 ${timeString}`);
                 return date.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -588,7 +612,6 @@
                     timeZone: 'America/Los_Angeles'
                 });
             } catch (error) {
-                console.error('Time formatting error:', error, timeString);
                 return timeString; // Return original if parsing fails
             }
         }
@@ -615,21 +638,6 @@
             await loadPageData();
             showPage('home');
         });
-
-        // Add navigation button styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .nav-btn {
-                padding: 0.5rem 1rem;
-                border-radius: 0.375rem;
-                font-weight: 500;
-                transition: all 0.2s;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
