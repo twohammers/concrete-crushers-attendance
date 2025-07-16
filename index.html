@@ -1,643 +1,1519 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Concrete Crushers - Game Attendance</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-        .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors; }
-        .btn-secondary { @apply bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors; }
-        .btn-success { @apply bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors; }
-        .btn-danger { @apply bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors; }
-        .card { @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6; }
-        .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
-        .badge-success { @apply bg-green-100 text-green-800; }
-        .badge-warning { @apply bg-yellow-100 text-yellow-800; }
-        .badge-danger { @apply bg-red-100 text-red-800; }
-        .input { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500; }
-        .loading { @apply animate-pulse bg-gray-200 rounded; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concrete Crushers</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Header Styles */
+    .header {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+      background-color: #4a90e2;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 24px;
+    }
+    
+    .team-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    /* Navigation */
+    .nav {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .nav-link {
+      padding: 10px 20px;
+      text-decoration: none;
+      color: #333;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .nav-link:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .nav-link.active {
+      background-color: #4a90e2;
+      color: white;
+    }
+    
+    /* Next Game Card */
+    .next-game-card {
+      background-color: #4a90e2;
+      color: white;
+      padding: 30px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .next-game-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      opacity: 0.9;
+    }
+    
+    .next-game-opponent {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    
+    .next-game-details {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    .home-badge {
+      display: inline-block;
+      background-color: #ff6b6b;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    /* Doubleheader Card */
+    .doubleheader-card {
+      background-color: #4a90e2;
+      color: white;
+      padding: 30px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .doubleheader-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .game-container {
+      display: flex;
+      justify-content: space-around;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .game-box {
+      flex: 1;
+      min-width: 250px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .game-number {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+    
+    /* Stats Section */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .attending { color: #51cf66; }
+    .not-attending { color: #ff6b6b; }
+    .no-response { color: #999; }
+    
+    /* Player List */
+    .player-list {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .player-list-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s ease;
+    }
+    
+    .player-item:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #666;
+    }
+    
+    .player-name {
+      font-weight: 500;
+      font-size: 16px;
+    }
+    
+    .status-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .status-btn {
+      padding: 8px 16px;
+      border: 2px solid #ddd;
+      background-color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .status-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .status-btn.active-in {
+      background-color: #51cf66;
+      color: white;
+      border-color: #51cf66;
+    }
+    
+    .status-btn.active-out {
+      background-color: #ff6b6b;
+      color: white;
+      border-color: #ff6b6b;
+    }
+    
+    /* Page Content */
+    .page-content {
+      display: none;
+    }
+    
+    .page-content.active {
+      display: block;
+    }
+    
+    /* Schedule Page */
+    .schedule-item {
+      background-color: white;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .schedule-date {
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 5px;
+    }
+    
+    .schedule-opponent {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+    
+    .schedule-details {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .schedule-badge {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .badge-home {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    
+    .badge-away {
+      background-color: #fff3e0;
+      color: #f57c00;
+    }
+    
+    .badge-bye {
+      background-color: #f5f5f5;
+      color: #666;
+    }
+    
+    .badge-active {
+      background-color: #51cf66;
+      color: white;
+    }
+    
+    /* Admin Panel */
+    .admin-section {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .admin-section h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .admin-btn {
+      padding: 10px 20px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .admin-btn:hover {
+      background-color: #357abd;
+    }
+    
+    .admin-btn.danger {
+      background-color: #ff6b6b;
+    }
+    
+    .admin-btn.danger:hover {
+      background-color: #ff5252;
+    }
+    
+    .clear-btn {
+      padding: 6px 12px;
+      background-color: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    /* Roster Management */
+    .roster-actions {
+      margin-bottom: 20px;
+    }
+    
+    .add-player-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .add-player-form input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    
+    .remove-btn {
+      padding: 6px 12px;
+      background-color: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 20px;
+      }
+      
+      .nav {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .stats-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .player-item {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+      }
+      
+      .status-buttons {
+        justify-content: center;
+      }
+      
+      .schedule-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+      }
+      
+      .game-container {
+        flex-direction: column;
+      }
+    }
+    
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .error {
+      background-color: #fee;
+      color: #c33;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .error h3 {
+      margin-bottom: 10px;
+    }
+    
+    .error-details {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      text-align: left;
+      font-family: monospace;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    /* Progress Bar */
+    .progress-container {
+      margin-top: 20px;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background-color: #e0e0e0;
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background-color: #51cf66;
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .progress-fill.insufficient {
+      background-color: #ff6b6b;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div id="app">
-        <!-- Navigation -->
-        <nav class="bg-white shadow-sm border-b">
-            <div class="max-w-6xl mx-auto px-4 py-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">CC</span>
-                        </div>
-                        <h1 class="text-xl font-bold text-gray-900">Concrete Crushers</h1>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="showPage('home')" class="btn-secondary" id="home-nav">Home</button>
-                        <button onclick="showPage('roster')" class="btn-secondary" id="roster-nav">Roster</button>
-                        <button onclick="showPage('schedule')" class="btn-secondary" id="schedule-nav">Schedule</button>
-                        <button onclick="showPage('admin')" class="btn-secondary" id="admin-nav">Admin</button>
-                    </div>
-                </div>
-            </div>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="logo-section">
+          <div class="logo">CC</div>
+          <h1 class="team-name">Concrete Crushers</h1>
+        </div>
+        <nav class="nav">
+          <a class="nav-link active" onclick="showPage('home', event)">Home</a>
+          <a class="nav-link" onclick="showPage('roster', event)">Roster</a>
+          <a class="nav-link" onclick="showPage('schedule', event)">Schedule</a>
+          <a class="nav-link" onclick="showPage('admin', event)">Admin</a>
         </nav>
-
-        <!-- Home Page -->
-        <div id="home-page" class="page max-w-6xl mx-auto">
-            <!-- Fixed Header Section -->
-            <div class="sticky top-0 bg-white z-10 p-4 space-y-4 border-b shadow-sm">
-                <!-- Featured Game Info Card -->
-                <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-4 shadow-lg">
-                    <div id="game-info" class="py-2"></div>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="card text-center p-6">
-                        <div class="text-4xl font-bold text-green-600" id="attending-count">-</div>
-                        <div class="text-sm text-gray-600 mt-1">Attending</div>
-                    </div>
-                    <div class="card text-center p-6">
-                        <div class="text-4xl font-bold text-red-600" id="not-attending-count">-</div>
-                        <div class="text-sm text-gray-600 mt-1">Not Attending</div>
-                    </div>
-                    <div class="card text-center p-6">
-                        <div class="text-4xl font-bold text-gray-500" id="no-response-count">-</div>
-                        <div class="text-sm text-gray-600 mt-1">No Response</div>
-                    </div>
-                    <div class="card text-center p-6">
-                        <div class="text-2xl font-bold text-blue-600" id="game-status-display">-</div>
-                        <div class="text-sm text-gray-600 mt-1">Game Status</div>
-                    </div>
-                </div>
-                
-                <!-- Progress Bar -->
-                <div id="progress-section" class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-700">Game Progress</span>
-                        <span class="text-sm text-gray-600" id="progress-text">0 of 10 players needed</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3">
-                        <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                    <div class="text-center">
-                        <span id="progress-message" class="text-sm font-medium text-gray-600">10 more needed!</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scrollable Roster Section -->
-            <div class="p-4">
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4">Quick Check-in</h2>
-                    <div id="roster-checkin" class="space-y-2">
-                        <div class="loading h-6"></div>
-                        <div class="loading h-6"></div>
-                        <div class="loading h-6"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Roster Page -->
-        <div id="roster-page" class="page hidden max-w-6xl mx-auto p-4">
-            <div class="card">
-                <h2 class="text-2xl font-bold mb-6">Team Roster</h2>
-                <div id="roster-list" class="space-y-3">
-                    <div class="loading h-16"></div>
-                    <div class="loading h-16"></div>
-                    <div class="loading h-16"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Schedule Page -->
-        <div id="schedule-page" class="page hidden max-w-6xl mx-auto p-4">
-            <div class="card">
-                <h2 class="text-2xl font-bold mb-6">Summer Ball 2025 Schedule</h2>
-                <div id="schedule-list" class="space-y-4">
-                    <div class="loading h-20"></div>
-                    <div class="loading h-20"></div>
-                    <div class="loading h-20"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Page -->
-        <div id="admin-page" class="page hidden max-w-6xl mx-auto p-4">
-            <!-- Password Screen -->
-            <div id="admin-login" class="max-w-md mx-auto mt-20">
-                <div class="card text-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-blue-600 text-2xl">🔒</span>
-                    </div>
-                    <h2 class="text-2xl font-bold mb-2">Admin Access</h2>
-                    <p class="text-gray-600 mb-6">Enter password to access admin controls</p>
-                    <form onsubmit="adminLogin(event)" class="space-y-4">
-                        <input type="password" id="admin-password" placeholder="Enter admin password" class="input" required>
-                        <button type="submit" class="btn-primary w-full">Access Admin</button>
-                        <button type="button" onclick="showPage('home')" class="btn-secondary w-full">Back to Home</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Admin Panel -->
-            <div id="admin-panel" class="hidden space-y-6">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold">Admin Panel</h1>
-                    <button onclick="adminLogout()" class="btn-secondary">Logout</button>
-                </div>
-
-                <!-- Admin Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="card text-center">
-                        <div class="text-2xl font-bold text-green-600" id="admin-attending">-</div>
-                        <div class="text-sm text-gray-600">Attending</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-2xl font-bold text-red-600" id="admin-not-attending">-</div>
-                        <div class="text-sm text-gray-600">Not Attending</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-lg font-semibold" id="admin-status">-</div>
-                        <div class="text-sm text-gray-600">Game Status</div>
-                    </div>
-                </div>
-
-                <!-- Attendance Management -->
-                <div class="card">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold">Attendance Management</h2>
-                        <button onclick="clearAllResponses()" class="btn-danger">Clear All Responses</button>
-                    </div>
-                    <div id="admin-attendees" class="space-y-2">
-                        <div class="loading h-12"></div>
-                    </div>
-                </div>
-
-                <!-- Game Management -->
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4">Game Management</h2>
-                    <div id="admin-games" class="space-y-2">
-                        <div class="loading h-12"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDTeaQDeyElLcs9A1Iwdtq2V_yygbBv0_w",
-            authDomain: "crushers-fdef6.firebaseapp.com",
-            projectId: "crushers-fdef6", 
-            storageBucket: "crushers-fdef6.firebasestorage.app",
-            appId: "1:808539884493:web:50e78b199b61fbccc9d284"
-        };
+    <!-- Error Display -->
+    <div id="error-display" style="display: none;"></div>
 
-        // Global state
-        let currentPage = 'home';
-        let isAdminAuthenticated = false;
-        let roster = [];
-        let attendees = [];
-        let games = [];
-        let activeGame = null;
-        let db = null;
+    <!-- Home Page -->
+    <div id="home-page" class="page-content active">
+      <!-- Dynamic Game Card (will be either next-game-card or doubleheader-card) -->
+      <div id="game-card-container">
+        <!-- Content will be dynamically inserted here -->
+      </div>
 
-        // Page navigation
-        window.showPage = function(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.getElementById(page + '-page').classList.remove('hidden');
-            
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
-            document.getElementById(page + '-nav').classList.add('bg-blue-600', 'text-white');
-            
-            currentPage = page;
-            loadPageData();
-        };
+      <!-- Stats Section -->
+      <div class="stats-section">
+        <div class="stat-card">
+          <div class="stat-number attending" id="attending-count">0</div>
+          <div class="stat-label">Attending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number not-attending" id="not-attending-count">0</div>
+          <div class="stat-label">Not Attending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number no-response" id="no-response-count">0</div>
+          <div class="stat-label">No Response</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="player-ratio">0/10</div>
+          <div class="stat-label">Game Status</div>
+        </div>
+      </div>
 
-        // Admin authentication
-        window.adminLogin = function(event) {
-            event.preventDefault();
-            const password = document.getElementById('admin-password').value;
-            if (password.toLowerCase() === 'dixie') {
-                isAdminAuthenticated = true;
-                document.getElementById('admin-login').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                loadAdminData();
-            } else {
-                alert('Incorrect password. Please try again.');
-                document.getElementById('admin-password').value = '';
-            }
-        };
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%">
+            <span id="progress-text">0/10 - 6 more needed!</span>
+          </div>
+        </div>
+      </div>
 
-        window.adminLogout = function() {
-            isAdminAuthenticated = false;
-            document.getElementById('admin-login').classList.remove('hidden');
-            document.getElementById('admin-panel').classList.add('hidden');
-            document.getElementById('admin-password').value = '';
-        };
+      <!-- Player List -->
+      <div class="player-list" style="margin-top: 30px;">
+        <div class="player-list-header">
+          <h2>Quick Check-in</h2>
+        </div>
+        <div id="player-checkin-list">
+          <div class="loading">Loading players...</div>
+        </div>
+      </div>
+    </div>
 
-        // Initialize Firebase
-        function initFirebase() {
-            try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                db = firebase.firestore();
-                console.log('Firebase initialized successfully');
-            } catch (error) {
-                console.error('Firebase initialization failed:', error);
-            }
+    <!-- Roster Page -->
+    <div id="roster-page" class="page-content">
+      <div class="admin-section">
+        <h2>Team Roster</h2>
+        <div class="roster-actions">
+          <div class="add-player-form">
+            <input type="text" id="new-player-name" placeholder="Enter player name">
+            <button class="admin-btn" onclick="addPlayer()">Add Player</button>
+          </div>
+        </div>
+        <div id="roster-list">
+          <div class="loading">Loading roster...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Page -->
+    <div id="schedule-page" class="page-content">
+      <h2 style="margin-bottom: 20px;">Summer Ball 2025 Schedule</h2>
+      <div id="schedule-list">
+        <div class="loading">Loading schedule...</div>
+      </div>
+    </div>
+
+    <!-- Admin Page -->
+    <div id="admin-page" class="page-content">
+      <div class="admin-section">
+        <h2>Admin Panel</h2>
+        <p style="margin-bottom: 20px; color: #666;">All actions require password authentication</p>
+        <button class="admin-btn" onclick="logoutAdmin()">Logout</button>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="admin-section">
+        <h3>Current Game Stats</h3>
+        <div class="stats-section">
+          <div class="stat-card">
+            <div class="stat-number attending" id="admin-attending">0</div>
+            <div class="stat-label">Attending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number not-attending" id="admin-not-attending">0</div>
+            <div class="stat-label">Not Attending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number no-response" id="admin-no-response">0</div>
+            <div class="stat-label">No Response</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="admin-game-status">Need more players</div>
+            <div class="stat-label">Game Status</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Management -->
+      <div class="admin-section">
+        <h3>Attendance Management</h3>
+        <div class="admin-actions" style="margin-bottom: 20px;">
+          <button class="admin-btn danger" onclick="clearAllResponses()">Clear All Responses</button>
+        </div>
+        <div id="admin-player-list">
+          <div class="loading">Loading attendance...</div>
+        </div>
+      </div>
+
+      <!-- Game Management -->
+      <div class="admin-section">
+        <h3>Game Management</h3>
+        <div class="admin-actions" style="margin-bottom: 20px;">
+          <button class="admin-btn danger" onclick="resetScheduleData()">Reset Schedule Data</button>
+        </div>
+        <div id="admin-game-list">
+          <div class="loading">Loading games...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxdMeNpmkX7ANCMWW8ie0mPBXJyac9aMg",
+      authDomain: "game-attendance.firebaseapp.com",
+      projectId: "game-attendance",
+      storageBucket: "game-attendance.firebasestorage.app",
+      messagingSenderId: "871940496672",
+      appId: "1:871940496672:web:09b9845d9583063fa24b45",
+      measurementId: "G-N2GZVFXC2Q"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Global variables
+    let roster = [];
+    let schedule = [];
+    let attendance = {};
+    let activeGameId = null;
+    let currentPage = 'home';
+    let isAuthenticated = false;
+
+    // Initial roster data from CSV
+    const initialRoster = [
+      "Alyssa Sherlock",
+      "Dahlia Moreno",
+      "Derrick Chew",
+      "Emily Rich",
+      "Francisco Chavez",
+      "Hayden Hogun",
+      "Honey Torres",
+      "Jessica Henriquez",
+      "Juan Ramos",
+      "Kathy Lininger",
+      "Michael Sanchez",
+      "Omar Banuelos",
+      "Robert Hodes",
+      "Sally Montenegro",
+      "Shannon Bible",
+      "Skye Lininger",
+      "Steven Maciel",
+      "Tereasa Ramos"
+    ];
+
+    // Initial schedule data from CSV
+    const initialSchedule = [
+      { opponent: "Chico Islanders", date: "2025-06-20", time: "19:10", field: "Hooker Oak Park", homeAway: "Home" },
+      { opponent: "Hignell Hooligans", date: "2025-06-27", time: "18:00", field: "Hooker Oak Park", homeAway: "Home" },
+      { opponent: "No Games This Week", date: "2025-07-04", time: "", field: "", homeAway: "Bye" },
+      { opponent: "Butte Roofing Company", date: "2025-07-11", time: "18:00", field: "Hooker Oak Park", homeAway: "Away" },
+      { opponent: "Butte Roofing Company", date: "2025-07-18", time: "20:20", field: "Hooker Oak Park", homeAway: "Home" },
+      { opponent: "Bat Habits", date: "2025-07-18", time: "21:30", field: "Hooker Oak Park", homeAway: "Home" },
+      { opponent: "Bat Habits", date: "2025-07-25", time: "20:20", field: "Hooker Oak Park", homeAway: "Away" },
+      { opponent: "Sticks and Chicks", date: "2025-08-01", time: "20:20", field: "Hooker Oak Park", homeAway: "Home" },
+      { opponent: "Bat Intentions", date: "2025-08-08", time: "20:20", field: "Hooker Oak Park", homeAway: "Away" },
+      { opponent: "Bat Intentions", date: "2025-08-15", time: "19:10", field: "Hooker Oak Park", homeAway: "Away" }
+    ];
+
+    // Password for admin actions
+    const ADMIN_PASSWORD = "dixie";
+
+    // Error handling
+    function showError(title, message, details = null) {
+      const errorDisplay = document.getElementById('error-display');
+      errorDisplay.style.display = 'block';
+      errorDisplay.className = 'error';
+      
+      let html = `<h3>${title}</h3><p>${message}</p>`;
+      
+      if (details) {
+        html += `<div class="error-details">${details}</div>`;
+      }
+      
+      errorDisplay.innerHTML = html;
+      
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        errorDisplay.style.display = 'none';
+      }, 10000);
+    }
+
+    function hideError() {
+      document.getElementById('error-display').style.display = 'none';
+    }
+
+    // Utility functions
+    function formatDate(dateStr) {
+      if (!dateStr) return 'No date';
+      // Parse the date components
+      const [year, month, day] = dateStr.split('-').map(num => parseInt(num));
+      // Create date and add one day to fix the offset
+      const date = new Date(year, month - 1, day);
+      date.setDate(date.getDate() + 1); // Add one day
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    }
+
+    function getCurrentPSTDate() {
+      const now = new Date();
+      // Use toLocaleString with PST timezone to get accurate date
+      const pstDateStr = now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+      return new Date(pstDateStr);
+    }
+
+    function isGamePassed(gameDate) {
+      const currentDate = getCurrentPSTDate();
+      const [year, month, day] = gameDate.split('-');
+      const gameDateObj = new Date(year, month - 1, parseInt(day) + 1); // Add 1 day to check if game day has fully passed
+      return currentDate > gameDateObj;
+    }
+
+    function checkPassword() {
+      const password = prompt("Enter admin password:");
+      return password && password.toLowerCase() === ADMIN_PASSWORD.toLowerCase();
+    }
+
+    // Escape player names for safe use in onclick attributes
+    function escapePlayerName(name) {
+      return name.replace(/'/g, "\\'");
+    }
+
+    // Page navigation
+    function showPage(page, event) {
+      if (event) {
+        event.preventDefault();
+      }
+      
+      currentPage = page;
+      
+      // Update navigation
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      
+      // Find and activate the clicked link
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.toLowerCase() === page) {
+          link.classList.add('active');
         }
+      });
+      
+      // Hide all pages
+      document.querySelectorAll('.page-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Show selected page
+      document.getElementById(`${page}-page`).classList.add('active');
+      
+      // Load page-specific content
+      if (page === 'home') {
+        loadAttendance();
+      } else if (page === 'roster') {
+        loadRosterPage();
+      } else if (page === 'schedule') {
+        loadSchedulePage();
+      } else if (page === 'admin') {
+        loadAdminPage();
+      }
+    }
 
-        // Data loading functions
-        async function loadRoster() {
-            try {
-                console.log('Loading roster from Firebase...');
-                const snapshot = await db.collection('teamRoster').where('isActive', '==', true).get();
-                roster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                    .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
-                console.log('Roster loaded:', roster.length, 'players');
-                return roster;
-            } catch (error) {
-                console.error('Error loading roster:', error);
-                // Fallback: show error message in UI
-                document.getElementById('roster-checkin').innerHTML = 
-                    '<p class="text-red-600">Error connecting to database. Please refresh the page.</p>';
-                return [];
-            }
-        }
-
-        async function loadAttendees() {
-            try {
-                console.log('Loading attendees from Firebase...');
-                const snapshot = await db.collection('attendees').get();
-                attendees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log('Attendees loaded:', attendees.length, 'responses');
-                return attendees;
-            } catch (error) {
-                console.error('Error loading attendees:', error);
-                return [];
-            }
-        }
-
-        async function loadGames() {
-            try {
-                console.log('Loading games from Firebase...');
-                const gamesSnapshot = await db.collection('games').orderBy('date').get();
-                games = gamesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                const activeSnapshot = await db.collection('games').where('isActive', '==', true).limit(1).get();
-                if (!activeSnapshot.empty) {
-                    activeGame = { id: activeSnapshot.docs[0].id, ...activeSnapshot.docs[0].data() };
-                }
-                
-                console.log('Games loaded:', games.length, 'games, active game:', activeGame?.opponent);
-                return games;
-            } catch (error) {
-                console.error('Error loading games:', error);
-                return [];
-            }
-        }
-
-        // Check-in functionality
-        window.checkIn = async function(firstName, lastName, status) {
-            try {
-                // Optimistic update for instant UI response
-                const existingAttendee = attendees.find(a => a.firstName === firstName && a.lastName === lastName);
-                if (existingAttendee) {
-                    existingAttendee.status = status;
-                } else {
-                    attendees.push({ firstName, lastName, status });
-                }
-                
-                // Update UI immediately
-                updateDisplay();
-                
-                // Then sync with Firebase
-                const existingSnapshot = await db.collection('attendees')
-                    .where('firstName', '==', firstName)
-                    .where('lastName', '==', lastName)
-                    .get();
-
-                if (!existingSnapshot.empty) {
-                    // Update existing attendee
-                    const doc = existingSnapshot.docs[0];
-                    await doc.ref.update({ status, updatedAt: new Date() });
-                } else {
-                    // Create new attendee
-                    await db.collection('attendees').add({
-                        firstName,
-                        lastName,
-                        status,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    });
-                }
-                
-            } catch (error) {
-                console.error('Error checking in:', error);
-                // Reload data on error to ensure consistency
-                await loadAttendees();
-                updateDisplay();
-                alert('Error updating attendance. Please try again.');
-            }
-        };
-
-        // Admin functions
-        window.clearAttendee = async function(attendeeId) {
-            try {
-                await db.collection('attendees').doc(attendeeId).delete();
-                await loadAttendees();
-                updateDisplay();
-            } catch (error) {
-                console.error('Error clearing attendee:', error);
-                alert('Error clearing attendance. Please try again.');
-            }
-        };
-
-        window.clearAllResponses = async function() {
-            if (confirm('Are you sure you want to clear all responses?')) {
-                try {
-                    const snapshot = await db.collection('attendees').get();
-                    const batch = db.batch();
-                    snapshot.docs.forEach(doc => {
-                        batch.delete(doc.ref);
-                    });
-                    await batch.commit();
-                    
-                    await loadAttendees();
-                    updateDisplay();
-                } catch (error) {
-                    console.error('Error clearing all responses:', error);
-                    alert('Error clearing all responses. Please try again.');
-                }
-            }
-        };
-
-        window.setActiveGame = async function(gameId) {
-            try {
-                // First, set all games to inactive
-                const allGamesSnapshot = await db.collection('games').get();
-                const batch = db.batch();
-                
-                allGamesSnapshot.docs.forEach(doc => {
-                    batch.update(doc.ref, { isActive: false });
-                });
-                
-                // Set the selected game to active
-                batch.update(db.collection('games').doc(gameId), { isActive: true });
-                
-                await batch.commit();
-                await loadGames();
-                updateDisplay();
-            } catch (error) {
-                console.error('Error setting active game:', error);
-                alert('Error setting active game. Please try again.');
-            }
-        };
-
-        // Display functions
-        function updateDisplay() {
-            if (currentPage === 'home') {
-                renderHome();
-            } else if (currentPage === 'roster') {
-                renderRoster();
-            } else if (currentPage === 'schedule') {
-                renderSchedule();
-            } else if (currentPage === 'admin' && isAdminAuthenticated) {
-                renderAdmin();
-            }
-        }
-
-        function renderHome() {
-            // Game info - prominent display
-            if (activeGame) {
-                document.getElementById('game-info').innerHTML = `
-                    <div class="text-center">
-                        <div class="text-xl font-bold text-white">NEXT GAME</div>
-                        <div class="text-lg font-semibold text-blue-100 mt-1">vs ${activeGame.opponent}</div>
-                        <div class="text-blue-100 text-sm mt-2">
-                            <div>${formatDate(activeGame.date)} at ${formatTime(activeGame.time)}</div>
-                            <div class="mt-1">${activeGame.location}</div>
-                        </div>
-                        <div class="mt-2">
-                            <span class="inline-block px-2 py-1 rounded text-xs font-medium ${activeGame.homeAway === 'Home' ? 'bg-green-500' : 'bg-orange-500'} text-white">
-                                ${activeGame.homeAway} Game
-                            </span>
-                        </div>
-                    </div>
-                `;
-            } else {
-                document.getElementById('game-info').innerHTML = '<p class="text-center text-blue-100">No active game scheduled</p>';
-            }
-
-            // Stats
-            const attending = attendees.filter(a => a.status === 'attending').length;
-            const notAttending = attendees.filter(a => a.status === 'not_attending').length;
-            const totalResponses = attendees.length;
-            const noResponse = roster.length - totalResponses;
-            const needed = Math.max(0, 10 - attending);
-            const gameStatus = attending >= 10 ? 'Game confirmed!' : `${attending}/10`;
-            const statusText = attending >= 10 ? 'Game confirmed!' : `${attending}/10 - ${needed} more needed!`;
-            
-            document.getElementById('attending-count').textContent = attending;
-            document.getElementById('not-attending-count').textContent = notAttending;
-            document.getElementById('no-response-count').textContent = noResponse;
-            document.getElementById('game-status-display').textContent = gameStatus;
-            
-            // Update progress bar
-            const progressPercent = Math.min((attending / 10) * 100, 100);
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            const progressMessage = document.getElementById('progress-message');
-            
-            progressBar.style.width = `${progressPercent}%`;
-            progressText.textContent = `${attending} of 10 players confirmed`;
-            
-            if (attending >= 10) {
-                progressBar.classList.remove('bg-blue-600');
-                progressBar.classList.add('bg-green-500');
-                progressMessage.textContent = 'Game confirmed!';
-            } else {
-                progressBar.classList.remove('bg-green-500');
-                progressBar.classList.add('bg-blue-600');
-                progressMessage.textContent = `${needed} more needed!`;
-            }
-
-            // Roster check-in
-            document.getElementById('roster-checkin').innerHTML = roster.map(member => {
-                const attendee = attendees.find(a => a.firstName === member.firstName && a.lastName === member.lastName);
-                const status = attendee?.status;
-                
-                return `
-                <div class="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span class="font-bold text-gray-600 text-sm">${member.firstName[0]}${member.lastName[0]}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-medium text-gray-900">${member.firstName} ${member.lastName}</span>
-                            ${status ? `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium ${status === 'attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                ${status === 'attending' ? '✓ Attending' : '✗ Not Attending'}
-                            </span>` : '<span class="text-gray-500 text-sm">No response</span>'}
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'attending')" 
-                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'attending' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">In</button>
-                        <button onclick="checkIn('${member.firstName}', '${member.lastName}', 'not_attending')" 
-                                class="px-4 py-2 rounded font-medium text-sm transition-colors ${status === 'not_attending' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">Out</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderRoster() {
-            document.getElementById('roster-list').innerHTML = roster.map(member => `
-                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span class="font-bold text-gray-600 text-sm">${member.firstName[0]}${member.lastName[0]}</span>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">${member.firstName} ${member.lastName}</h3>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-600">Games Played</div>
-                        <div class="font-bold text-gray-900">${member.gamesPlayed || 0}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderSchedule() {
-            document.getElementById('schedule-list').innerHTML = games.map(game => `
-                <div class="border rounded-lg p-4 ${game.isActive ? 'border-blue-500 bg-blue-50' : ''}">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold">vs ${game.opponent}</h3>
-                            <p class="text-gray-600">${formatDate(game.date)} • ${formatTime(game.time)}</p>
-                            <p class="text-gray-600">${game.location}</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="badge ${game.homeAway === 'Home' ? 'badge-success' : 'badge-warning'}">${game.homeAway}</span>
-                            ${game.isActive ? '<div class="text-sm text-blue-600 font-medium mt-1">Active Game</div>' : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderAdmin() {
-            // Admin stats
-            const attending = attendees.filter(a => a.status === 'attending').length;
-            const notAttending = attendees.filter(a => a.status === 'not_attending').length;
-            const gameStatus = attending >= 10 ? 'Game confirmed' : 'Need more players';
-
-            document.getElementById('admin-attending').textContent = attending;
-            document.getElementById('admin-not-attending').textContent = notAttending;
-            document.getElementById('admin-status').textContent = gameStatus;
-
-            // Admin attendees
-            document.getElementById('admin-attendees').innerHTML = attendees.length ?
-                attendees.map(attendee => `
-                    <div class="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                            <span class="font-medium">${attendee.firstName} ${attendee.lastName}</span>
-                            <span class="badge ml-2 ${attendee.status === 'attending' ? 'badge-success' : 'badge-danger'}">
-                                ${attendee.status === 'attending' ? 'Attending' : 'Not Attending'}
-                            </span>
-                        </div>
-                        <button onclick="clearAttendee('${attendee.id}')" class="btn-danger">Clear</button>
-                    </div>
-                `).join('') : '<p class="text-gray-600">No responses yet</p>';
-
-            // Admin games
-            document.getElementById('admin-games').innerHTML = games.map(game => `
-                <div class="flex items-center justify-between p-3 border rounded-lg ${game.isActive ? 'border-blue-500 bg-blue-50' : ''}">
-                    <div>
-                        <span class="font-medium">vs ${game.opponent}</span>
-                        <span class="text-gray-600 ml-2">${formatDate(game.date)} • ${formatTime(game.time)}</span>
-                    </div>
-                    ${game.isActive ? 
-                        '<span class="badge badge-success">Active</span>' : 
-                        `<button onclick="setActiveGame('${game.id}')" class="btn-primary">Set Active</button>`
-                    }
-                </div>
-            `).join('');
-        }
-
-        // Helper functions
-        function formatDate(dateString) {
-            // Parse date as local time to avoid timezone shifting
-            const parts = dateString.split('/');
-            if (parts.length === 3) {
-                // Create date in local timezone (month is 0-indexed)
-                const date = new Date(parts[2], parts[0] - 1, parts[1]);
-                return date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    timeZone: 'America/Los_Angeles'
-                });
-            }
-            // Fallback for other date formats
-            return new Date(dateString + ' PST').toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                timeZone: 'America/Los_Angeles'
-            });
-        }
-
-        function formatTime(timeString) {
-            // If timeString is already formatted (like "7:10 PM"), return as is
-            if (timeString && (timeString.includes('AM') || timeString.includes('PM'))) {
-                return timeString;
-            }
-            
-            // Otherwise, try to parse and format with PST
-            try {
-                const date = new Date(`2000-01-01 ${timeString}`);
-                return date.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                    timeZone: 'America/Los_Angeles'
-                });
-            } catch (error) {
-                return timeString; // Return original if parsing fails
-            }
-        }
-
-        async function loadPageData() {
-            if (currentPage === 'home' || currentPage === 'admin') {
-                await Promise.all([loadRoster(), loadAttendees(), loadGames()]);
-            } else if (currentPage === 'roster') {
-                await loadRoster();
-            } else if (currentPage === 'schedule') {
-                await loadGames();
-            }
-            updateDisplay();
-        }
-
-        async function loadAdminData() {
-            await Promise.all([loadRoster(), loadAttendees(), loadGames()]);
-            renderAdmin();
-        }
-
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', async () => {
-            initFirebase();
-            await loadPageData();
-            showPage('home');
+    // Initialize authentication
+    function initializeAuth() {
+      auth.signInAnonymously()
+        .then(() => {
+          console.log("Signed in anonymously");
+          isAuthenticated = true;
+          initializeDatabase();
+        })
+        .catch(error => {
+          console.error("Auth error:", error);
+          showError(
+            "Authentication Error",
+            "Failed to authenticate with Firebase. The app may not work correctly.",
+            `Error: ${error.message}`
+          );
+          // Try to initialize anyway
+          initializeDatabase();
         });
-    </script>
+    }
+
+    // Initialize database
+    async function initializeDatabase() {
+      try {
+        // Check if roster exists
+        const rosterDoc = await db.collection('settings').doc('roster').get();
+        if (!rosterDoc.exists) {
+          console.log("Creating initial roster...");
+          await db.collection('settings').doc('roster').set({
+            players: initialRoster
+          });
+        }
+        
+        // Check if schedule exists
+        const scheduleDoc = await db.collection('settings').doc('schedule').get();
+        if (!scheduleDoc.exists) {
+          console.log("Creating initial schedule...");
+          await db.collection('settings').doc('schedule').set({
+            games: initialSchedule
+          });
+        }
+        
+        // Check if active game exists
+        const activeGameDoc = await db.collection('settings').doc('activeGame').get();
+        if (!activeGameDoc.exists) {
+          // Default to game index 4 (first game of July 18 doubleheader)
+          await db.collection('settings').doc('activeGame').set({
+            gameId: 4
+          });
+        }
+        
+        // Load data
+        await loadRoster();
+        await loadSchedule();
+        await loadAttendance();
+        
+        hideError();
+        
+      } catch (error) {
+        console.error("Database initialization error:", error);
+        
+        if (error.code === 'permission-denied') {
+          showError(
+            "Database Permission Error",
+            "Unable to access the database. Please check your Firebase security rules.",
+            `Make sure your Firestore rules allow read/write access. 
+            Go to Firebase Console > Firestore Database > Rules and use:
+            
+            rules_version = '2';
+            service cloud.firestore {
+              match /databases/{database}/documents {
+                match /{document=**} {
+                  allow read, write: if true;
+                }
+              }
+            }`
+          );
+        } else {
+          showError(
+            "Database Error",
+            "Failed to initialize the database.",
+            `Error: ${error.message}`
+          );
+        }
+      }
+    }
+
+    // Load roster from Firebase
+    async function loadRoster() {
+      try {
+        const doc = await db.collection('settings').doc('roster').get();
+        if (doc.exists) {
+          roster = doc.data().players || [];
+          roster.sort(); // Keep alphabetical order
+        }
+      } catch (error) {
+        console.error("Error loading roster:", error);
+        showError("Error", "Failed to load roster", error.message);
+      }
+    }
+
+    // Load schedule from Firebase
+    async function loadSchedule() {
+      try {
+        const doc = await db.collection('settings').doc('schedule').get();
+        if (doc.exists) {
+          schedule = doc.data().games || [];
+        }
+        
+        // Load active game
+        const activeDoc = await db.collection('settings').doc('activeGame').get();
+        if (activeDoc.exists) {
+          activeGameId = activeDoc.data().gameId;
+        }
+        
+        // Update game display
+        if (activeGameId !== null && schedule[activeGameId]) {
+          updateGameDisplay();
+        }
+        
+      } catch (error) {
+        console.error("Error loading schedule:", error);
+        showError("Error", "Failed to load schedule", error.message);
+      }
+    }
+
+    // Update game display (handles both single games and doubleheaders)
+    function updateGameDisplay() {
+      if (activeGameId === null || !schedule[activeGameId]) return;
+      
+      const game = schedule[activeGameId];
+      const container = document.getElementById('game-card-container');
+      
+      // Check if this is part of a doubleheader
+      const isFirstGameOfDoubleheader = activeGameId < schedule.length - 1 && 
+                                        schedule[activeGameId + 1].date === game.date;
+      const isSecondGameOfDoubleheader = activeGameId > 0 && 
+                                         schedule[activeGameId - 1].date === game.date;
+      
+      if (isFirstGameOfDoubleheader || isSecondGameOfDoubleheader) {
+        // Display doubleheader card
+        let game1, game2;
+        if (isFirstGameOfDoubleheader) {
+          game1 = game;
+          game2 = schedule[activeGameId + 1];
+        } else {
+          game1 = schedule[activeGameId - 1];
+          game2 = game;
+        }
+        
+        container.innerHTML = `
+          <div class="doubleheader-card">
+            <div class="doubleheader-title">⚾ Doubleheader Night! ⚾</div>
+            <div class="next-game-details" style="margin-bottom: 20px;">
+              ${formatDate(game1.date)} • ${game1.field}
+            </div>
+            <div class="game-container">
+              <div class="game-box">
+                <div class="game-number">GAME 1</div>
+                <div class="next-game-opponent">vs ${game1.opponent}</div>
+                <div class="next-game-details">
+                  ${formatTime(game1.time)}<br>
+                  <span class="home-badge">${game1.homeAway.toLowerCase()} game</span>
+                </div>
+              </div>
+              <div class="game-box">
+                <div class="game-number">GAME 2</div>
+                <div class="next-game-opponent">vs ${game2.opponent}</div>
+                <div class="next-game-details">
+                  ${formatTime(game2.time)}<br>
+                  <span class="home-badge">${game2.homeAway.toLowerCase()} game</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // Display single game card
+        if (game.homeAway === 'Bye') {
+          container.innerHTML = `
+            <div class="next-game-card">
+              <div class="next-game-title">NEXT GAME</div>
+              <div class="next-game-opponent">${game.opponent}</div>
+              <div class="next-game-details">
+                ${formatDate(game.date)} • No Games
+              </div>
+              <span class="home-badge">bye</span>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="next-game-card">
+              <div class="next-game-title">NEXT GAME</div>
+              <div class="next-game-opponent">vs ${game.opponent}</div>
+              <div class="next-game-details">
+                ${formatDate(game.date)} • ${formatTime(game.time)}<br>
+                ${game.field}
+              </div>
+              <span class="home-badge">${game.homeAway.toLowerCase()} game</span>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // Load attendance
+    async function loadAttendance() {
+      if (activeGameId === null) return;
+      
+      try {
+        const snapshot = await db.collection('attendance')
+          .where('gameId', '==', activeGameId)
+          .get();
+        
+        attendance = {};
+        snapshot.forEach(doc => {
+          attendance[doc.data().player] = doc.data().status;
+        });
+        
+        updateAttendanceDisplay();
+        updateStats();
+      } catch (error) {
+        console.error("Error loading attendance:", error);
+        showError("Error", "Failed to load attendance", error.message);
+      }
+    }
+
+    // Update attendance display
+    function updateAttendanceDisplay() {
+      const container = document.getElementById('player-checkin-list');
+      container.innerHTML = '';
+      
+      roster.forEach(player => {
+        const status = attendance[player] || 'no-response';
+        const initials = player.split(' ').map(n => n[0]).join('');
+        
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player-item';
+        playerDiv.innerHTML = `
+          <div class="player-info">
+            <div class="player-avatar">${initials}</div>
+            <div class="player-name">${player}</div>
+            <span class="status-label" style="color: ${getStatusColor(status)}; font-weight: 500;">
+              ${status === 'no-response' ? 'No response' : status === 'in' ? '✓ Attending' : '✗ Not Attending'}
+            </span>
+          </div>
+          <div class="status-buttons">
+            <button class="status-btn ${status === 'in' ? 'active-in' : ''}" 
+                    onclick="updatePlayerStatus('${escapePlayerName(player)}', 'in')">In</button>
+            <button class="status-btn ${status === 'out' ? 'active-out' : ''}" 
+                    onclick="updatePlayerStatus('${escapePlayerName(player)}', 'out')">Out</button>
+          </div>
+        `;
+        container.appendChild(playerDiv);
+      });
+    }
+
+    function getStatusColor(status) {
+      switch(status) {
+        case 'in': return '#51cf66';
+        case 'out': return '#ff6b6b';
+        default: return '#999';
+      }
+    }
+
+    // Update player status
+    async function updatePlayerStatus(player, status) {
+      if (activeGameId === null) {
+        showError("Error", "No active game selected");
+        return;
+      }
+      
+      try {
+        const docId = `${activeGameId}_${player.replace(/\s+/g, '_')}`;
+        await db.collection('attendance').doc(docId).set({
+          player: player,
+          status: status,
+          gameId: activeGameId,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        attendance[player] = status;
+        updateAttendanceDisplay();
+        updateStats();
+        
+        if (currentPage === 'admin') {
+          loadAdminPage();
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
+        showError("Error", "Failed to update player status", error.message);
+      }
+    }
+
+    // Update statistics
+    function updateStats() {
+      const stats = {
+        in: 0,
+        out: 0,
+        'no-response': 0
+      };
+      
+      roster.forEach(player => {
+        const status = attendance[player] || 'no-response';
+        stats[status]++;
+      });
+      
+      // Update count displays
+      document.getElementById('attending-count').textContent = stats.in;
+      document.getElementById('not-attending-count').textContent = stats.out;
+      document.getElementById('no-response-count').textContent = stats['no-response'];
+      
+      // Update player ratio
+      const ratioText = `${stats.in}/10`;
+      document.getElementById('player-ratio').textContent = ratioText;
+      
+      // Update progress bar
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+      const percentage = (stats.in / 10) * 100;
+      
+      progressFill.style.width = `${Math.min(percentage, 100)}%`;
+      
+      if (stats.in >= 10) {
+        progressFill.classList.remove('insufficient');
+        progressText.textContent = `${stats.in}/10 - Ready to play!`;
+      } else {
+        progressFill.classList.add('insufficient');
+        const needed = 10 - stats.in;
+        progressText.textContent = `${stats.in}/10 - ${needed} more needed!`;
+      }
+      
+      // Update admin stats if on admin page
+      if (currentPage === 'admin') {
+        document.getElementById('admin-attending').textContent = stats.in;
+        document.getElementById('admin-not-attending').textContent = stats.out;
+        document.getElementById('admin-no-response').textContent = stats['no-response'];
+        document.getElementById('admin-game-status').textContent = 
+          stats.in >= 10 ? 'Ready to play' : 'Need more players';
+      }
+    }
+
+    // Roster Management Functions
+    async function loadRosterPage() {
+      const container = document.getElementById('roster-list');
+      container.innerHTML = '';
+      
+      roster.forEach((player) => {
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player-item';
+        playerDiv.innerHTML = `
+          <div class="player-info">
+            <div class="player-avatar">${player.split(' ').map(n => n[0]).join('')}</div>
+            <div class="player-name">${player}</div>
+          </div>
+          <button class="remove-btn" onclick="removePlayer('${escapePlayerName(player)}')">Remove</button>
+        `;
+        container.appendChild(playerDiv);
+      });
+    }
+
+    async function addPlayer() {
+      if (!checkPassword()) return;
+      
+      const nameInput = document.getElementById('new-player-name');
+      const playerName = nameInput.value.trim();
+      
+      if (!playerName) {
+        alert('Please enter a player name');
+        return;
+      }
+      
+      if (roster.includes(playerName)) {
+        alert('Player already exists');
+        return;
+      }
+      
+      try {
+        roster.push(playerName);
+        roster.sort();
+        
+        await db.collection('settings').doc('roster').update({
+          players: roster
+        });
+        
+        nameInput.value = '';
+        loadRosterPage();
+        
+        if (currentPage === 'home') {
+          updateAttendanceDisplay();
+          updateStats();
+        }
+      } catch (error) {
+        console.error("Error adding player:", error);
+        showError("Error", "Failed to add player", error.message);
+      }
+    }
+
+    async function removePlayer(player) {
+      if (!checkPassword()) return;
+      
+      if (!confirm(`Are you sure you want to remove ${player} from the roster?`)) return;
+      
+      try {
+        roster = roster.filter(p => p !== player);
+        
+        await db.collection('settings').doc('roster').update({
+          players: roster
+        });
+        
+        // Remove any attendance records for this player
+        const snapshot = await db.collection('attendance')
+          .where('player', '==', player)
+          .get();
+        
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        
+        delete attendance[player];
+        
+        loadRosterPage();
+        
+        if (currentPage === 'home') {
+          updateAttendanceDisplay();
+          updateStats();
+        }
+      } catch (error) {
+        console.error("Error removing player:", error);
+        showError("Error", "Failed to remove player", error.message);
+      }
+    }
+
+    // Schedule Page Functions
+    function loadSchedulePage() {
+      const container = document.getElementById('schedule-list');
+      container.innerHTML = '';
+      
+      schedule.forEach((game, index) => {
+        const isPassed = isGamePassed(game.date);
+        const isActive = index === activeGameId;
+        
+        const gameDiv = document.createElement('div');
+        gameDiv.className = 'schedule-item';
+        if (isPassed) gameDiv.style.opacity = '0.6';
+        
+        let badgeClass = 'badge-away';
+        if (game.homeAway === 'Home') badgeClass = 'badge-home';
+        else if (game.homeAway === 'Bye') badgeClass = 'badge-bye';
+        
+        // Check if this is part of a doubleheader
+        const isFirstGameOfDoubleheader = index < schedule.length - 1 && 
+                                          schedule[index + 1].date === game.date;
+        const isSecondGameOfDoubleheader = index > 0 && 
+                                           schedule[index - 1].date === game.date;
+        
+        let doubleheaderNote = '';
+        if (isFirstGameOfDoubleheader) {
+          doubleheaderNote = '<br><small style="color: #666;">Doubleheader - Game 1</small>';
+        } else if (isSecondGameOfDoubleheader) {
+          doubleheaderNote = '<br><small style="color: #666;">Doubleheader - Game 2</small>';
+        }
+        
+        gameDiv.innerHTML = `
+          <div>
+            <div class="schedule-date">${formatDate(game.date)}</div>
+            <div class="schedule-opponent">vs ${game.opponent}</div>
+            <div class="schedule-details">
+              ${game.time ? formatTime(game.time) + ' • ' : ''}${game.field || 'No Games'}${doubleheaderNote}
+            </div>
+          </div>
+          <div>
+            ${isActive ? '<span class="schedule-badge badge-active">Active Game</span>' : ''}
+            <span class="schedule-badge ${badgeClass}">${game.homeAway.toLowerCase()}</span>
+          </div>
+        `;
+        
+        container.appendChild(gameDiv);
+      });
+    }
+
+    // Admin Page Functions
+    async function loadAdminPage() {
+      // Update stats
+      updateStats();
+      
+      // Load attendance list
+      const attendanceContainer = document.getElementById('admin-player-list');
+      attendanceContainer.innerHTML = '';
+      
+      roster.forEach(player => {
+        const status = attendance[player] || 'no-response';
+        const statusText = status === 'in' ? 'Attending' : status === 'out' ? 'Not Attending' : 'No Response';
+        
+        const playerDiv = document.createElement('div');
+        playerDiv.className = 'player-item';
+        playerDiv.innerHTML = `
+          <div class="player-info">
+            <div class="player-name">${player}</div>
+            <span style="color: ${getStatusColor(status)}; font-weight: 500;">${statusText}</span>
+          </div>
+          <button class="clear-btn" onclick="clearPlayerResponse('${escapePlayerName(player)}')">Clear</button>
+        `;
+        attendanceContainer.appendChild(playerDiv);
+      });
+      
+      // Load game management
+      const gameContainer = document.getElementById('admin-game-list');
+      gameContainer.innerHTML = '';
+      
+      schedule.forEach((game, index) => {
+        const isActive = index === activeGameId;
+        const isPassed = isGamePassed(game.date);
+        
+        const gameDiv = document.createElement('div');
+        gameDiv.className = 'schedule-item';
+        
+        gameDiv.innerHTML = `
+          <div>
+            <div class="schedule-opponent">vs ${game.opponent}</div>
+            <div class="schedule-date">${formatDate(game.date)}</div>
+          </div>
+          <div>
+            ${isActive ? '<span class="schedule-badge badge-active">Active</span>' : ''}
+            ${!isActive ? `<button class="admin-btn" onclick="setActiveGame(${index})">Set Active</button>` : ''}
+          </div>
+        `;
+        
+        gameContainer.appendChild(gameDiv);
+      });
+    }
+
+    async function clearPlayerResponse(player) {
+      if (!checkPassword()) return;
+      
+      try {
+        const docId = `${activeGameId}_${player.replace(/\s+/g, '_')}`;
+        await db.collection('attendance').doc(docId).delete();
+        
+        delete attendance[player];
+        updateStats();
+        loadAdminPage();
+        
+        if (currentPage === 'home') {
+          updateAttendanceDisplay();
+        }
+      } catch (error) {
+        console.error("Error clearing response:", error);
+        showError("Error", "Failed to clear response", error.message);
+      }
+    }
+
+    async function clearAllResponses() {
+      if (!checkPassword()) return;
+      
+      if (!confirm('Are you sure you want to clear all responses for the current game?')) return;
+      
+      try {
+        const snapshot = await db.collection('attendance')
+          .where('gameId', '==', activeGameId)
+          .get();
+        
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        
+        attendance = {};
+        updateStats();
+        loadAdminPage();
+        
+        if (currentPage === 'home') {
+          updateAttendanceDisplay();
+        }
+      } catch (error) {
+        console.error("Error clearing all responses:", error);
+        showError("Error", "Failed to clear responses", error.message);
+      }
+    }
+
+    async function setActiveGame(gameIndex) {
+      if (!checkPassword()) return;
+      
+      const game = schedule[gameIndex];
+      if (!confirm(`Set "${game.opponent}" on ${formatDate(game.date)} as the active game?`)) return;
+      
+      try {
+        // Update active game
+        activeGameId = gameIndex;
+        attendance = {};
+        
+        // Save to Firebase
+        await db.collection('settings').doc('activeGame').set({
+          gameId: activeGameId
+        });
+        
+        // Update displays
+        updateGameDisplay();
+        updateStats();
+        loadAdminPage();
+        
+        if (currentPage === 'home') {
+          updateAttendanceDisplay();
+        }
+        
+        alert('Active game updated successfully!');
+      } catch (error) {
+        console.error("Error setting active game:", error);
+        showError("Error", "Failed to update active game", error.message);
+      }
+    }
+
+    // Reset Schedule Data
+    async function resetScheduleData() {
+      if (!checkPassword()) return;
+      
+      if (!confirm('This will reset the schedule data to match the CSV. Continue?')) return;
+      
+      try {
+        // Update schedule in Firebase
+        await db.collection('settings').doc('schedule').set({
+          games: initialSchedule
+        });
+        
+        // Reload schedule
+        schedule = [...initialSchedule];
+        
+        // Refresh displays
+        updateGameDisplay();
+        loadSchedulePage();
+        loadAdminPage();
+        
+        alert('Schedule data reset successfully!');
+      } catch (error) {
+        console.error("Error resetting schedule:", error);
+        showError("Error", "Failed to reset schedule data", error.message);
+      }
+    }
+
+    function logoutAdmin() {
+      showPage('home', null);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize authentication first
+      initializeAuth();
+      
+      // Add keyboard shortcut for admin
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+          showPage('admin', null);
+        }
+      });
+    });
+
+    // Handle authentication state changes
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        console.log("User authenticated:", user.uid);
+        isAuthenticated = true;
+      } else {
+        console.log("User not authenticated");
+        isAuthenticated = false;
+      }
+    });
+  </script>
 </body>
 </html>
