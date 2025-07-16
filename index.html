@@ -764,12 +764,16 @@
     // Utility functions
     function formatDate(dateStr) {
       if (!dateStr) return 'No date';
-      // Parse the date components
+      // Parse the date components properly to avoid UTC timezone issues
       const [year, month, day] = dateStr.split('-').map(num => parseInt(num));
-      // Create date and add one day to fix the offset
-      const date = new Date(year, month - 1, day);
-      date.setDate(date.getDate() + 1); // Add one day
-      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      // Create date using local timezone (avoiding UTC conversion)
+      const date = new Date(year, month - 1, day, 12, 0, 0); // Set to noon to avoid timezone edge cases
+      const options = { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric',
+        timeZone: 'America/Los_Angeles' // Pacific Time Zone for Chico, CA
+      };
       return date.toLocaleDateString('en-US', options);
     }
 
@@ -792,7 +796,7 @@
     function isGamePassed(gameDate) {
       const currentDate = getCurrentPSTDate();
       const [year, month, day] = gameDate.split('-');
-      const gameDateObj = new Date(year, month - 1, parseInt(day) + 1); // Add 1 day to check if game day has fully passed
+      const gameDateObj = new Date(year, month - 1, parseInt(day), 23, 59, 59); // Set to end of game day in local time
       return currentDate > gameDateObj;
     }
 
