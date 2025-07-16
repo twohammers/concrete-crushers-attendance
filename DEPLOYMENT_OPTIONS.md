@@ -1,54 +1,71 @@
-# Concrete Crushers - Deployment Options & GitHub Integration
+# Concrete Crushers - Firebase Hosting Deployment & GitHub Integration
 
 ## Executive Summary
 
-✅ **GitHub Pages works perfectly** for your HTML/Firebase project  
-✅ **You can use GitHub to make changes and auto-deploy** to multiple platforms  
+✅ **Firebase Hosting deployment configured** for your existing URL  
+✅ **GitHub Actions will auto-deploy** to `https://game-attendance.web.app/`  
 ✅ **Date/timezone issues have been fixed**  
-✅ **Multiple free hosting options available**
+✅ **Your team's bookmarks will continue working**
 
 ---
 
-## 1. GitHub Pages Setup - ✅ COMPLETED
+## 1. Firebase Hosting Setup - ✅ COMPLETED
 
 ### Current Status
-- ✅ GitHub Actions workflow created (`.github/workflows/deploy.yml`)
-- ✅ Will auto-deploy on every push to `main` branch
-- ✅ Your site will be available at: `https://twohammers.github.io/concrete-crushers-attendance/`
+- ✅ Firebase configuration files created (`firebase.json`, `.firebaserc`)
+- ✅ GitHub Actions workflow updated (`.github/workflows/deploy.yml`)
+- ✅ Will auto-deploy to your existing Firebase URL: `https://game-attendance.web.app/`
+- ✅ Your team's bookmarks will continue working
 
 ### How it Works
 1. You push changes to GitHub
 2. GitHub Actions automatically runs
-3. Site deploys to GitHub Pages
-4. Your Firebase backend continues working normally
+3. Site deploys to Firebase Hosting at your existing URL
+4. Your Firebase Firestore backend continues working normally
 
 ### Next Steps
-1. Go to your GitHub repository settings
-2. Navigate to **Settings → Pages**
-3. Under "Source", select **GitHub Actions**
-4. The workflow will run automatically on your next push
+1. **Set up Firebase Service Account** (see instructions below)
+2. **Add the service account key to GitHub Secrets**
+3. The workflow will run automatically on your next push
 
 ---
 
-## 2. GitHub + Firebase Integration - ✅ WORKS PERFECTLY
+## 2. Firebase Service Account Setup - 🔄 REQUIRED
 
-### Your Current Setup
-- **Frontend**: Static HTML/CSS/JavaScript (hosted on GitHub Pages)
-- **Backend**: Firebase Firestore (continues running as-is)
-- **Domain**: Can use GitHub Pages URL or custom domain
+### Creating the Service Account
+You need to create a service account to allow GitHub Actions to deploy to Firebase:
+
+1. **Go to Google Cloud Console**: https://console.cloud.google.com/
+2. **Select your project**: `game-attendance`
+3. **Navigate to IAM & Admin → Service Accounts**
+4. **Click "Create Service Account"**
+5. **Fill in the details**:
+   - Name: `github-actions-deploy`
+   - Description: `Service account for GitHub Actions Firebase deployment`
+6. **Grant permissions**: Add the role `Firebase Hosting Admin`
+7. **Create and download JSON key**
+
+### Adding the Key to GitHub Secrets
+1. **Go to your GitHub repository**
+2. **Settings → Secrets and variables → Actions**
+3. **Click "New repository secret"**
+4. **Name**: `FIREBASE_SERVICE_ACCOUNT_GAME_ATTENDANCE`
+5. **Value**: Paste the entire JSON content from the downloaded key file
+6. **Click "Add secret"**
 
 ### Benefits of This Approach
-- ✅ **Free hosting** on GitHub Pages
+- ✅ **Deploy to your existing Firebase URL**
+- ✅ **Team bookmarks continue working**
 - ✅ **Automatic deployments** when you update code
 - ✅ **Firebase backend remains unchanged**
 - ✅ **Version control** for all your changes
-- ✅ **No Firebase hosting costs**
+- ✅ **Free Firebase hosting** (within generous limits)
 
 ### Workflow for Making Changes
 1. Edit files in GitHub web interface OR locally
 2. Commit and push changes
-3. GitHub Actions automatically deploys
-4. Site updates within 2-3 minutes
+3. GitHub Actions automatically deploys to Firebase
+4. Site updates at `https://game-attendance.web.app/` within 2-3 minutes
 5. Firebase data remains intact
 
 ---
@@ -106,13 +123,13 @@ The dates should now display correctly for:
 
 ## 5. Deployment Commands Reference
 
-### GitHub Pages (Current Setup)
+### Firebase Hosting (Current Setup)
 ```bash
 # No commands needed - automatic on push!
 git add .
 git commit -m "Update game schedule"
 git push origin main
-# Site updates automatically
+# Site updates automatically at https://game-attendance.web.app/
 ```
 
 ### Manual Firebase Hosting (if you want to switch)
@@ -144,26 +161,28 @@ surge
 
 | Service | Free Tier | Cost After Free |
 |---------|-----------|-----------------|
-| **GitHub Pages** | Unlimited public repos | $4/month for private repos |
 | **Firebase Hosting** | 10GB storage, 10GB/month transfer | $0.026/GB storage, $0.15/GB transfer |
+| **GitHub Pages** | Unlimited public repos | $4/month for private repos |
 | **Netlify** | 300 build minutes, 100GB bandwidth | $19/month |
 | **Vercel** | 100GB bandwidth | $20/month |
 
-**Recommendation**: Your current GitHub Pages + Firebase setup is the most cost-effective.
+**Recommendation**: Your current Firebase Hosting + Firestore setup is perfect and cost-effective.
 
 ---
 
 ## 7. Next Steps
 
 ### Immediate Actions
-1. ✅ GitHub Actions workflow is ready
-2. ✅ Date issues are fixed
-3. 🔄 Enable GitHub Pages in repository settings
-4. 🔄 Test the deployment
+1. ✅ Firebase configuration files created
+2. ✅ GitHub Actions workflow updated for Firebase
+3. ✅ Date issues are fixed
+4. 🔄 Create Firebase service account (see instructions above)
+5. 🔄 Add service account key to GitHub Secrets
+6. 🔄 Test the deployment
 
 ### Future Enhancements
-- **Custom Domain**: Point your own domain to GitHub Pages
-- **HTTPS**: GitHub Pages provides free SSL certificates
+- **Custom Domain**: You can point your own domain to Firebase Hosting  
+- **HTTPS**: Firebase Hosting provides free SSL certificates
 - **Branch Protection**: Set up branch rules for safer deployments
 - **Staging Environment**: Use a separate branch for testing
 
@@ -181,7 +200,7 @@ surge
 **GitHub Actions not running**
 - Check repository permissions
 - Ensure workflow file is in `main` branch
-- Verify GitHub Pages is enabled
+- Verify Firebase service account secret is added
 
 **Firebase not connecting**
 - API keys are public (safe for frontend)
@@ -194,19 +213,20 @@ surge
 - Verify game dates in schedule array
 
 ### Support Resources
-- [GitHub Pages Documentation](https://docs.github.com/en/pages)
-- [Firebase Hosting Guide](https://firebase.google.com/docs/hosting)
-- [GitHub Actions Help](https://docs.github.com/en/actions)
+- [Firebase Hosting Documentation](https://firebase.google.com/docs/hosting)
+- [GitHub Actions for Firebase](https://github.com/marketplace/actions/deploy-to-firebase-hosting)
+- [Google Cloud Service Accounts](https://cloud.google.com/iam/docs/service-accounts)
 
 ---
 
 ## Conclusion
 
 Your setup is now optimized for:
-- ✅ **Free hosting** on GitHub Pages
+- ✅ **Deploy to your existing Firebase URL** (`https://game-attendance.web.app/`)
 - ✅ **Automatic deployments** via GitHub Actions  
-- ✅ **Continued Firebase backend** functionality
+- ✅ **Team bookmarks continue working** (no URL changes needed)
 - ✅ **Fixed date/timezone** display
 - ✅ **Version control** for all changes
+- ✅ **Integrated Firebase hosting and backend**
 
-The combination of GitHub Pages + Firebase is perfect for your use case and provides the best value and functionality.
+Firebase Hosting + Firestore provides a unified, professional solution that keeps your team's bookmarks working.
