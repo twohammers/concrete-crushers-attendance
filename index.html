@@ -599,6 +599,12 @@
       <div class="admin-section">
         <h2>Team Roster</h2>
         <div class="roster-actions">
+          <div class="bulk-actions" style="margin-bottom: 15px;">
+            <button class="admin-btn" onclick="resetRosterData()">Reset to CSV Data</button>
+            <button class="admin-btn" onclick="exportRosterCSV()">Export CSV</button>
+            <input type="file" id="roster-file-input" accept=".csv" style="display: none;" onchange="importRosterCSV(event)">
+            <button class="admin-btn" onclick="document.getElementById('roster-file-input').click()">Import CSV</button>
+          </div>
           <div class="add-player-form">
             <input type="text" id="new-player-name" placeholder="Enter player name">
             <button class="admin-btn" onclick="addPlayer()">Add Player</button>
@@ -664,7 +670,10 @@
       <div class="admin-section">
         <h3>Game Management</h3>
         <div class="admin-actions" style="margin-bottom: 20px;">
-          <button class="admin-btn danger" onclick="resetScheduleData()">Reset Schedule Data</button>
+          <button class="admin-btn danger" onclick="resetScheduleData()">Reset to CSV Data</button>
+          <button class="admin-btn" onclick="exportScheduleCSV()">Export CSV</button>
+          <input type="file" id="schedule-file-input" accept=".csv" style="display: none;" onchange="importScheduleCSV(event)">
+          <button class="admin-btn" onclick="document.getElementById('schedule-file-input').click()">Import CSV</button>
         </div>
         <div id="admin-game-list">
           <div class="loading">Loading games...</div>
@@ -698,40 +707,45 @@
     let currentPage = 'home';
     let isAuthenticated = false;
 
-    // Initial roster data from CSV
+    // Initial roster data from CSV - Updated to match current roster
     const initialRoster = [
       "Alyssa Sherlock",
       "Dahlia Moreno",
       "Derrick Chew",
       "Emily Rich",
       "Francisco Chavez",
+      "Haley De Los Santos",
       "Hayden Hogun",
       "Honey Torres",
       "Jessica Henriquez",
+      "Josie Ramos",
       "Juan Ramos",
       "Kathy Lininger",
+      "Kevin Evans",
       "Michael Sanchez",
+      "Nicole Harper",
       "Omar Banuelos",
       "Robert Hodes",
       "Sally Montenegro",
       "Shannon Bible",
       "Skye Lininger",
       "Steven Maciel",
-      "Tereasa Ramos"
+      "Tereasa Ramos",
+      "Victor De Los Santos"
     ];
 
-    // Initial schedule data from CSV
+    // Initial schedule data from CSV - Updated to match current schedule
     const initialSchedule = [
-      { opponent: "Chico Islanders", date: "2025-06-20", time: "19:10", field: "Hooker Oak Park", homeAway: "Home" },
-      { opponent: "Hignell Hooligans", date: "2025-06-27", time: "18:00", field: "Hooker Oak Park", homeAway: "Home" },
-      { opponent: "No Games This Week", date: "2025-07-04", time: "", field: "", homeAway: "Bye" },
-      { opponent: "Butte Roofing Company", date: "2025-07-11", time: "18:00", field: "Hooker Oak Park", homeAway: "Away" },
-      { opponent: "Butte Roofing Company", date: "2025-07-18", time: "20:20", field: "Hooker Oak Park", homeAway: "Home" },
-      { opponent: "Bat Habits", date: "2025-07-18", time: "21:30", field: "Hooker Oak Park", homeAway: "Home" },
-      { opponent: "Bat Habits", date: "2025-07-25", time: "20:20", field: "Hooker Oak Park", homeAway: "Away" },
-      { opponent: "Sticks and Chicks", date: "2025-08-01", time: "20:20", field: "Hooker Oak Park", homeAway: "Home" },
-      { opponent: "Bat Intentions", date: "2025-08-08", time: "20:20", field: "Hooker Oak Park", homeAway: "Away" },
-      { opponent: "Bat Intentions", date: "2025-08-15", time: "19:10", field: "Hooker Oak Park", homeAway: "Away" }
+      { opponent: "Chico Islanders", date: "2025-06-20", time: "19:10", field: "Hooker Oak Park", homeAway: "Home", week: 1 },
+      { opponent: "Hignell Hooligans", date: "2025-06-27", time: "18:00", field: "Hooker Oak Park", homeAway: "Home", week: 2 },
+      { opponent: "No Games This Week", date: "2025-07-04", time: "", field: "", homeAway: "Bye", week: 3 },
+      { opponent: "Butte Roofing Company", date: "2025-07-11", time: "18:00", field: "Hooker Oak Park", homeAway: "Away", week: 4 },
+      { opponent: "Butte Roofing Company", date: "2025-07-18", time: "20:20", field: "Hooker Oak Park", homeAway: "Home", week: 5 },
+      { opponent: "Bat Habits", date: "2025-07-18", time: "21:30", field: "Hooker Oak Park", homeAway: "Home", week: 5 },
+      { opponent: "Bat Habits", date: "2025-07-25", time: "20:20", field: "Hooker Oak Park", homeAway: "Away", week: 6 },
+      { opponent: "Sticks and Chicks", date: "2025-08-01", time: "20:20", field: "Hooker Oak Park", homeAway: "Home", week: 7 },
+      { opponent: "Bat intentions", date: "2025-08-08", time: "20:20", field: "Hooker Oak Park", homeAway: "Away", week: 8 },
+      { opponent: "Bat intentions", date: "2025-08-15", time: "19:10", field: "Hooker Oak Park", homeAway: "Away", week: 9 }
     ];
 
     // Password for admin actions
@@ -1489,6 +1503,200 @@
         console.error("Error resetting schedule:", error);
         showError("Error", "Failed to reset schedule data", error.message);
       }
+    }
+
+    // Roster CSV Management Functions
+    async function resetRosterData() {
+      if (!checkPassword()) return;
+      
+      if (!confirm('This will reset the roster data to match the CSV. Continue?')) return;
+      
+      try {
+        // Update roster in Firebase
+        await db.collection('settings').doc('roster').set({
+          players: initialRoster
+        });
+        
+        // Reload roster
+        roster = [...initialRoster];
+        roster.sort(); // Keep alphabetical order
+        
+        // Refresh displays
+        loadRosterPage();
+        loadAdminPage();
+        updateAttendanceDisplay();
+        
+        alert('Roster data reset successfully!');
+      } catch (error) {
+        console.error("Error resetting roster:", error);
+        showError("Error", "Failed to reset roster data", error.message);
+      }
+    }
+
+    function exportRosterCSV() {
+      if (!checkPassword()) return;
+      
+      // Create CSV content
+      let csvContent = "Name\n";
+      roster.forEach(player => {
+        csvContent += `${player}\n`;
+      });
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `roster-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    async function importRosterCSV(event) {
+      if (!checkPassword()) return;
+      
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        // Skip header if it exists
+        const players = lines[0].toLowerCase().includes('name') ? lines.slice(1) : lines;
+        const cleanedPlayers = players
+          .map(player => player.trim())
+          .filter(player => player.length > 0)
+          .sort();
+        
+        if (!confirm(`Import ${cleanedPlayers.length} players? This will replace the current roster.`)) return;
+        
+        // Update Firebase
+        await db.collection('settings').doc('roster').set({
+          players: cleanedPlayers
+        });
+        
+        // Update local data
+        roster = [...cleanedPlayers];
+        
+        // Refresh displays
+        loadRosterPage();
+        loadAdminPage();
+        updateAttendanceDisplay();
+        
+        alert(`Successfully imported ${cleanedPlayers.length} players!`);
+      } catch (error) {
+        console.error("Error importing roster:", error);
+        showError("Error", "Failed to import roster CSV", error.message);
+      }
+      
+      // Clear the file input
+      event.target.value = '';
+    }
+
+    // Schedule CSV Management Functions
+    function exportScheduleCSV() {
+      if (!checkPassword()) return;
+      
+      // Create CSV content with headers
+      let csvContent = "Opponent,Date,Time,Field,Home/Away,Week Number\n";
+      schedule.forEach((game, index) => {
+        const date = new Date(game.date).toLocaleDateString('en-US');
+        const time = game.time ? `${game.time}:00 PM PST` : 'NA';
+        const field = game.field || 'NA';
+        const homeAway = game.homeAway || 'NA';
+        const week = game.week || (index + 1);
+        csvContent += `${game.opponent},${date},${time},${field},${homeAway},${week}\n`;
+      });
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `schedule-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    async function importScheduleCSV(event) {
+      if (!checkPassword()) return;
+      
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        // Skip header line
+        const gameLines = lines.slice(1);
+        const games = [];
+        
+        gameLines.forEach((line, index) => {
+          const [opponent, date, time, field, homeAway, week] = line.split(',').map(item => item.trim());
+          if (opponent) {
+            // Parse date from M/D/YYYY to YYYY-MM-DD
+            let parsedDate = date;
+            if (date && date !== 'NA') {
+              const dateObj = new Date(date);
+              parsedDate = dateObj.toISOString().split('T')[0];
+            }
+            
+            // Parse time to 24-hour format
+            let parsedTime = '';
+            if (time && time !== 'NA') {
+              const timeMatch = time.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)/i);
+              if (timeMatch) {
+                let hours = parseInt(timeMatch[1]);
+                const minutes = timeMatch[2];
+                const period = timeMatch[4].toUpperCase();
+                
+                if (period === 'PM' && hours !== 12) hours += 12;
+                if (period === 'AM' && hours === 12) hours = 0;
+                
+                parsedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+              }
+            }
+            
+            games.push({
+              opponent: opponent,
+              date: parsedDate,
+              time: parsedTime,
+              field: field === 'NA' ? '' : field,
+              homeAway: homeAway === 'NA' ? 'Bye' : homeAway,
+              week: parseInt(week) || (index + 1)
+            });
+          }
+        });
+        
+        if (!confirm(`Import ${games.length} games? This will replace the current schedule.`)) return;
+        
+        // Update Firebase
+        await db.collection('settings').doc('schedule').set({
+          games: games
+        });
+        
+        // Update local data
+        schedule = [...games];
+        
+        // Refresh displays
+        updateGameDisplay();
+        loadSchedulePage();
+        loadAdminPage();
+        
+        alert(`Successfully imported ${games.length} games!`);
+      } catch (error) {
+        console.error("Error importing schedule:", error);
+        showError("Error", "Failed to import schedule CSV", error.message);
+      }
+      
+      // Clear the file input
+      event.target.value = '';
     }
 
     function logoutAdmin() {
